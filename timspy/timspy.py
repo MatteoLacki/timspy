@@ -12,7 +12,6 @@ from rmodel.polyfit import polyfit
 
 from .iterators import ranges
 from .sql import table2df
-from .scans import Scans
 
 
 class AdvancedTims(TimsData):
@@ -239,15 +238,22 @@ class AdvancedTims(TimsData):
         return out
 
     def plot_models(self, show=True):
-        """Plot model fittings."""
+        """Plot model fittings.
+
+        Args:
+            show (boolean): Show the plot or only append it to the current canvas.
+        """
         import matplotlib.pyplot as plt
         fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
         plt.sca(ax1)
-        self.mzIdx2mz_model.plot(show=False)
+        self.mzIdx2mz_model.plot(show=False, label='Mass Index vs M/Z')
+        plt.legend()
         plt.sca(ax2)
-        self.frame2rt_model.plot(show=False)
+        self.frame2rt_model.plot(show=False, label='Frame vs Retention Time')
+        plt.legend()
         plt.sca(ax3)
-        self.scan2im_model.plot(show=False)
+        self.scan2im_model.plot(show=False, label='Scan No vs Drift Time')
+        plt.legend()
         if show:
             plt.show()
 
@@ -256,10 +262,9 @@ class AdvancedTims(TimsData):
         
         Args:
             frames (int,iterable,slice): Frames to restrict to.
-            scans (int): Scans to restrict to.
 
         Yields:
-            A flow of numpy arrays.
+            A data array with .
         """
         for f in np.r_[frames]:
             yield self.frame_array(f, self.min_scan, self.max_scan)
@@ -347,19 +352,14 @@ class AdvancedTims(TimsData):
         tot_len = int(peak_cnts.sum())
 
         masses = np.empty(shape=(tot_len,), dtype=np.uint32)
-        # masses = np.empty(shape=(tot_len,), dtype=np.float64)
         intensities = np.empty(shape=(tot_len,), dtype=np.uint32)
         m = 0
         for npeaks in peak_cnts[peak_cnts>0]:
             masses[m:m+npeaks] = x[d:d+npeaks]
-            # masses[m:m+npeaks] = self.indexToMz(frame, x[d:d+npeaks])
             d += npeaks
             intensities[m:m+npeaks] = x[d:d+npeaks]
             d += npeaks
             m += npeaks
-        # im_scans = np.repeat(np.arange(scan_begin,scan_end), peak_cnts)
-        # if not raw:
-        # im_scans = self.scanNumToOneOverK0(frame, im_scans)
         masses = self.indexToMz(frame, masses)
         im_scans = self.scanNumToOneOverK0(frame,
                                            np.repeat(np.arange(scan_begin,scan_end), peak_cnts))
@@ -375,22 +375,15 @@ class AdvancedTims(TimsData):
         peak_cnts = x[:scans_no]
         peak_cnts = peak_cnts.astype(np.int)
         tot_len = int(peak_cnts.sum())
-
         masses = np.empty(shape=(tot_len,), dtype=np.uint32)
-        # masses = np.empty(shape=(tot_len,), dtype=np.float64)
         intensities = np.empty(shape=(tot_len,), dtype=np.uint32)
         m = 0
         for npeaks in peak_cnts[peak_cnts>0]:
             masses[m:m+npeaks] = x[d:d+npeaks]
-            # masses[m:m+npeaks] = self.indexToMz(frame, x[d:d+npeaks])
             d += npeaks
             intensities[m:m+npeaks] = x[d:d+npeaks]
             d += npeaks
             m += npeaks
-        # im_scans = np.repeat(np.arange(scan_begin,scan_end), peak_cnts)
-        # if not raw:
-        # im_scans = self.scanNumToOneOverK0(frame, im_scans)
-        # masses = self.indexToMz(frame, masses)
         im_scans = np.repeat(np.arange(scan_begin,scan_end), peak_cnts)
         return im_scans, masses, intensities
 
@@ -416,29 +409,21 @@ class AdvancedTims(TimsData):
             vx_df.export_hdf5(path=path)
             del vx_df, pd_df
 
-    def scan_usage(self, frames=None, min_scan=None, max_scan=None):
-        """Get the number of peaks detected per each (frame,scan) within the selected data cube.
+    @lru_cache(maxsize=1)
+    def peak_counts(self):
+        """Get the number of peaks detected per each (frame,scan)."""
+        frames = range(self.min_frame, self.max_frame+1)
+        s, S = self.min_scan, self.max_scan
+        return pd.DataFrame(np.vstack([self.get_peakCnts_massIdxs_intensities_array(f,s,S)[s:S]
+                                       for f in frames]), index=frames)
 
-        Defaults to the settings of the object.
+    def plot_peak_counts(self, binary=False, show=True):
+        """
+
+        This function requires matplotlib to be installed.
 
         Args:
-            frame_min (int): The minimal frame number.
-            frame_max (int): The maximal + 1 retrieved frame.
-            scan_min (int): Minimal scan number.
-            scan_max (int): Maximal scan number.
-        """
-        frames = range(self.min_frame, self.max_frame+1) if frames is None else frames
-        s = self.min_scan if min_scan is None else min_scan
-        S = self.max_scan if max_scan is None else max_scan
-        peaks = [self.get_peakCnts_massIdxs_intensities_array(int(f),s,S)[s:S]
-                 for f in frames]
-        return Scans(np.vstack(peaks), frames, s, S)
-
-    @lru_cache(maxsize=1)
-    def plot_scan_usage(self, binary=False, show=True):
-        """Show number of peaks found in each scan in each frame, or the number of non-empty scans in each frame.
-
-        binary (boolean): plot only scan usage.
+            binary (boolean): plots 1 if a scan contained intensity, 0 otherwise.
         """
         import matplotlib.pyplot as plt
         SU = self.scan_usage()
@@ -455,7 +440,6 @@ class AdvancedTims(TimsData):
         plt.plot(f, SSU_MS2, c='grey')
         if show:
             plt.show()
-
 
 
 class TimsDIA(AdvancedTims):

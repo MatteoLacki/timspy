@@ -83,23 +83,8 @@ scan_no = F.groupby('scan').frame.count().values.argmax()
 S = F.query('scan == @scan_no')
 print(S)
 
-SU = D.scan_usage()
-binary=False
-if binary:
-    plt.axhline(y=self.max_scan, color='r', linestyle='-')
-    plt.axhline(y=self.min_scan, color='r', linestyle='-')
-SSU = np.count_nonzero(SU, axis=1) if binary else SU.sum(axis=1)
-SSU_MS1 = SSU.copy()
-SSU_MS1[D.ms2frames()] = 0
-SSU_MS2 = SSU.copy()
-SSU_MS2[D.ms1frames()] = 0
-f = D.frame_indices()
-plt.vlines(f,0, SSU_MS1, colors='orange')
-plt.show()
-D[0]
-
+D.plot_scan_usage()
 D.plot_overview()
-
 
 # to change mz_idx to m/z there are two possibilities.
 # 0. use the built in method
@@ -121,3 +106,91 @@ R['mz'] = D.mzIdx2mz_model(R.mz_idx)
 
 R.plot(R.mz, R.im, shape=(1000,919))
 plt.show()
+D.plot_models()
+
+frames = range(1,100)
+list(frames)
+
+
+from collections import Counter
+PC = D.peak_counts()
+PC.max(axis=1).max()
+
+next(D.iterScans(100, 500, 600))
+
+x = D.get_peakCnts_massIdxs_intensities_array(1000, 0, 918)
+x[0:918]
+sum(x[0:918])
+x[0:918]
+D[10]
+
+
+
+
+ss = D.readScans(1,0,918)
+len(ss)
+
+
+import pandas as pd
+
+
+frames = range(D.min_frame, D.max_frame+1) if frames is None else frames
+s = self.min_scan if min_scan is None else min_scan
+S = self.max_scan if max_scan is None else max_scan
+peaks = [self.get_peakCnts_massIdxs_intensities_array(int(f),s,S)[s:S]
+         for f in frames]
+
+
+class Scans(pd.DataFrame):
+    def __init__(self, S, frames, min_scan, max_scan):
+        super().__init__(S)
+        self.columns = range(min_scan, max_scan)
+        self.index = frames
+
+    def plot(self, show=True, **plt_kwds):
+        """Show number of peaks found in each scan in each frame, or the number of non-empty scans in each frame.
+
+        binary (boolean): plot only scan usage.
+        """
+        import matplotlib.pyplot as plt
+        plt.imshow(self.T, **plt_kwds)
+        if show:
+            plt.show()
+
+    def plot1d(self, binary=False, color='orange', show=True, **vlines_kwds):
+        import matplotlib.pyplot as plt
+
+        if binary:
+            plt.axhline(y=min(self.columns), color='r', linestyle='-')
+            plt.axhline(y=max(self.columns), color='r', linestyle='-')
+        S = np.count_nonzero(self, axis=1) if binary else self.sum(axis=1)
+        if 'color' not in vlines_kwds:
+            vlines_kwds['color'] = color
+        plt.vlines(S.index,0, S, **vlines_kwds)
+        if show:
+            plt.show()
+
+
+
+D.windows
+
+SU = D.scan_usage()
+SU.plot()
+SU.plot1d()
+plt.axhline(y=D.max_scan, color='r', linestyle='-')
+plt.axhline(y=D.min_scan, color='r', linestyle='-')
+SSU = np.count_nonzero(SU, axis=1)
+SSU_MS1 = SSU.copy()
+
+len(SSU_MS1)
+SSU_MS1[D.ms2frames()-1] = 0
+SSU_MS2 = SSU.copy()
+SSU_MS2[D.ms1frames()-1] = 0
+f = D.frame_indices()
+plt.vlines(f,0, SSU_MS1, colors='orange', label='MS1')
+plt.plot(f, SSU_MS2, c='grey', label='MS2')
+plt.legend()
+plt.show()
+
+# we should make a consistant use of frames here
+
