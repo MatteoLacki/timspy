@@ -1,5 +1,6 @@
 """Wrappers for TimsData with more DataScientistFriendly functions."""
 
+from collections.abc import Iterable
 from functools import lru_cache
 from math import inf
 import numpy as np
@@ -13,6 +14,7 @@ from rmodel.polyfit import polyfit
 
 from .iterators import ranges
 from .sql import table2df
+
 
 
 class AdvancedTims(TimsData):
@@ -279,68 +281,89 @@ class AdvancedTims(TimsData):
             plt.show()
 
 
-    def iter_dfs(self, *args, **kwds):
-        """Iterate over data frames with TDF data.
-        
-        Arguments like for 'self.get_frame_scanMin_scanMax'.
+    def fix_scans(self, scans):
+        if isinstance(scans, slice):
+            s = self.min_scan if scans.start is None else scans.start
+            S = self.max_scan if scans.stop is None else scans.stop
+        elif isinstance(scans, int):
+            s = scans
+            S = scans+1
+        else:
+            #TODO: this is the only part that is not filtering anything.
+            #In general, it should filter out unwanted scans.
+            scans = np.r_[scans]
+            if len(scans) > 0:
+                s = scans.min()
+                S = scans.max()+1
+            else:
+                raise IndexError("This type of scans are not valid indices.")
+        s = min(max(s, self.min_scan), self.max_scan-1)
+        S = max(min(S, self.max_scan), self.min_scan)
+        return s, S
 
-        Yields:
-            A flow of numpy arrays.
+
+    def _iter(self, x):
+        """Private iteration over arrays.
+
+        You can call it explicitly, but better call it like D.iter[1:10, 100:200].
+        x is something that can be handled by __getitem__.
         """
-        for A in self.iter_arrays(*args, **kwds):
-            F = pd.DataFrame(A)
-            F.columns = ('frame', 'scan', 'mz_idx', 'i')
-            yield F
+        if not isinstance(x, tuple):
+            s, S = self.border_scans
+            frames = x 
+            scans = slice(s,S)
+        else:
+            assert len(x) == 2, "Pass in [frames, scan_begin:scan_end], or [frames, scanNo]"
+            frames, scans = x        
+
+        if isinstance(frames, str):
+            frames = self.frames.query(frames).index.get_level_values('frame')
+        elif isinstance(frames, slice):
+            start = self.min_frame if frames.start is None else frames.start
+            stop = self.max_frame if frames.stop is None else frames.stop
+            step = 1 if frames.step is None else frames.step
+            frames = range(start, stop, step)
+        elif isinstance(frames, Iterable):
+            pass
+        else:
+            frames = np.r_[frames]
+
+        s, S = self.fix_scans(scans)
+        f, F = self.border_frames
+
+        for frameNo in frames:
+            if f <= frameNo <= F:
+                frame = self.frame_array(frameNo,s,S)
+                if len(frame):
+                    frame = pd.DataFrame(frame)
+                    frame.columns = ('frame', 'scan', 'mz_idx', 'i') 
+                    yield frame
 
 
     def __getitem__(self, x):
-        if isinstance(x, tuple):
-            if len(x) == 2:
-                if isinstance(x[0], str):
-                    frames = self.frames.query(x[0]).index.get_level_values('frame')
-                    x = (frames, x[1])
-                arr = super().__getitem__(x)
-            else:
-                raise Warning('Strange arguments.')
-        else:
-            s, S = self.border_scans
-            arr = super().__getitem__((x, slice(s,S)))
-        res = pd.DataFrame(arr)
-        res.columns = 'frame', 'scan', 'mz_idx', 'i'
-        return res
+        """Get a data frame for given frames and scans.
 
-
-    def array(self, frames, filter_frames=''):
-        """Return a numpy array with given data.
-
-        Arguments like for 'self.get_frame_scanMin_scanMax'.
-
+        Args:
+            x (tuple): First element corresponds to iterable/slice of frames. Second element corresponds to slice/iterable of scans. For now, only selection by scan_begin:scan_end is supported.
         Returns:
-            np.array: an array with four columns: frame, scan, mass index (flight time), and intensity.
-        """
-        if filter_frames:
-            frames = np.r_[self.frames.loc[frames].query(filter_frames).index.get_level_values('frame')]
-        else:
-            frames = np.r_[frames]
-        if len(frames) == 0:
-            return np.empty(shape=(0,4))
-        else:
-            return np.concatenate(list(self.iter_arrays(frames)), axis=0)
+            pd.DataFrame: Data frame with columns with frame numbers, scan numbers, mass indices, and intensities."""
+        dfs = list(self._iter(x))
+        if dfs:
+            return pd.concat(dfs)
+        else: 
+            return pd.DataFrame(columns=('frame', 'scan', 'mz_idx', 'i'))
 
 
-    def df(self, *args, **kwds):
-        """Return a data frame with a selection of data.
+    def iter_MS1(self):
+        """Iterate over MS1 frames."""
+        yield from self.iter['MsMsType == 0']
 
-        Arguments like for 'self.array'.
-
-        Returns:
-            pandas.DataFrame: with four columns: frame, scan, mass index (flight time), and intensity.
-        """
-        df = pd.DataFrame(self.array(*args,**kwds))
-        df.columns = ('frame', 'scan', 'mz_idx', 'i')
-        return df
+    def iter_MS2(self):
+        """Iterate over MS1 frames."""
+        yield from self.iter['MsMsType == 9']
 
 
+    #TODO: this can be done similarly to how VAEX does it.
     def plot_overview(self, min_frame, max_frame, show=True):
         """Plot overview."""
         import matplotlib.pyplot as plt

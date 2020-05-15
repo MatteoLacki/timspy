@@ -25,3 +25,14 @@ TD[1:10, 100:500]
 TD[1:100, 100]
 list(TD.iter[1:100, 100])
 
+TD[1:10, 100:500]
+TD[[10, 20, 30], 100:500]
+TD[[10, 20, 30], [40, 49]]
+TD[[10, 20, 30], [41, 60]]
+TD[:20, [41, 60]]
+TD[11552,10]
+TD[11552:,10] # exception will be raised automatically!
+
+TD[(i**2 for i in range(1,10)), 10:50]
+
+from collections.abc import Iterable

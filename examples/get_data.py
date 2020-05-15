@@ -32,32 +32,27 @@ D.plot_windows()
 D.peakCnts_massIdxs_intensities(100, 100, 101)
 D.MS1_frameNumbers()
 
-
+# different indexing schemes.
 D.frames
-D[1:10, 1:599]
-D['rt > 10 and rt < 50', 1:599]
-D['MsMsType == 0 and rt < 50', 1:599]
-
-D.iter[1:10, 1:599]
-
-class ComfyIter(object):
-    def __init__(self, D):
-        self.D = D
-
-    def __getitem__(self, x):
-        
-
-
-
-
-D.global_TIC()
-
-
-D.min_frame
-D.max_frame
-D.plot_peak_counts()
+list(D.iter[1:5, 100:110])
+list(D.iter[1:4])
+list(D.iter['rt > 10 and rt < 20'])
+D[1:5, 1:100]
+D[1:5]
+D[1:5, [33, 50]]
+D[(i**2 for i in range(10)), [33, 50]]
 D[[1,2,10], 10:100]
 D[[1,2,10], [10, 50]]
+D['rt > 10 and rt < 50', 1:599]
+D['MsMsType == 0 and rt < 50', 1:599]
+D.iter['MsMsType == 0 and rt < 50', 1:599]
+D.iterMS1()
+
+
+D.plot_overview(1000,2000)
+D.global_TIC()
+D.plot_peak_counts()
+
 
 x = slice(2, 50, 3)
 x = slice(2, 50)
@@ -65,16 +60,10 @@ range(x.start, x.stop, x.step)
 for f in D.frames.query('MsMsType == 0').index.get_level_values('frame'):
     print(f)
 
+ms1it = D.iter['MsMsType == 0']
+next(ms1it)
 
-
-
-np.r_[slice(2, 50, 3)]
-np.r_[20]
-np.r_[[20, 340], 1:45]
-
-parse_slice(x)
-parse_slice(10)
-
+D['MsMsType == 0 and rt < 10']
 
 # and plot windows belonging to particular window groups
 D.plot_windows('window_gr in (1,4)')
@@ -83,14 +72,13 @@ D.plot_windows('window_gr in (1,4)')
 print(D.frames)
 # each frame here has a 'rt' value assigned: that's the retention time.
 
-# to get data in one frame (say the 1000th):
-F = D.df(frames=1000)
-D[1000:1050]
-print(F)
 
 %%timeit
-F = D.df(frames=11553)
+F = D[11553]
+# 1.11 ms ± 28.1 µs per loop (mean ± std. dev. of 7 runs, 1000 loops each)  
 
+D.frames.query('window_gr == 1')
+D['window_gr == 1 and rt < 10']
 
 # this is much more flexible:
 F = D.df(frames=slice(1000,1500,3))
@@ -117,49 +105,18 @@ D.frame_array(10, 100, 918)
 
 
 # this concatenates the frames/windows that you want from this generator:
-it = D.iter_arrays(frames=slice(1000,1100))
+it = D.iter[1000:1100]
 print(next(it))
 print(next(it))
-# or you can iterate data.frames
-it = D.iter_dfs(frames=slice(1000,1100))
-print(next(it))
-print(next(it))
-
-np.r_[1:10]
-it = D.iter_arrays(10)
-next(it)
-D[10]
-np.r_[10:23]
-
-
-np.r_[np.r_[10]]
-D.array(10)
-
-list(D.iter_arrays(np.r_[10]))
-
-D.array(frames=[10])
-
-frames = 10
-
-np.concatenate(list(D.iter_arrays(frames)), axis=0)
-
-D.array(frames=[10,20])
-frames = np.r_[[10,20], 12]
-frames.sort()
-
-
-
 
 # to get some scans:
 # let's find the most populated scan in the most intense frame
 frame_no = D.frames.SummedIntensities.values.argmax()
-F = D.df(frames=frame_no)
+F = D[frame_no]
 scan_no = F.groupby('scan').frame.count().values.argmax()
 S = F.query('scan == @scan_no')
 print(S)
 
-D.plot_scan_usage()
-D.plot_overview()
 
 # to change mz_idx to m/z there are two possibilities.
 # 0. use the built in method
@@ -186,34 +143,6 @@ D.plot_models()
 frames = range(1,100)
 list(frames)
 
-
-from collections import Counter
-PC = D.peak_counts()
-PC.max(axis=1).max()
-
-next(D.iterScans(100, 500, 600))
-
-x = D.get_peakCnts_massIdxs_intensities_array(1000, 0, 918)
-x[0:918]
-sum(x[0:918])
-x[0:918]
-D[10]
-
-
-
-
-ss = D.readScans(1,0,918)
-len(ss)
-
-
-import pandas as pd
-
-
-frames = range(D.min_frame, D.max_frame+1) if frames is None else frames
-s = self.min_scan if min_scan is None else min_scan
-S = self.max_scan if max_scan is None else max_scan
-peaks = [self.get_peakCnts_massIdxs_intensities_array(int(f),s,S)[s:S]
-         for f in frames]
 
 
 class Scans(pd.DataFrame):
