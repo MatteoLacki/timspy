@@ -9,6 +9,7 @@ import vaex as vx
 
 from timspy.timspy import TimsDIA
 from timspy.plot import plot_spectrum
+from timsdata import TimsData
 
 # plt.style.use('dark_background')
 pd.set_option('display.max_rows', 10)
@@ -28,6 +29,52 @@ print(D.windows)# info on available windows
 print(D.windows.loc[1])
 # you can plot windows
 D.plot_windows()
+D.peakCnts_massIdxs_intensities(100, 100, 101)
+D.MS1_frameNumbers()
+
+
+D.frames
+D[1:10, 1:599]
+D['rt > 10 and rt < 50', 1:599]
+D['MsMsType == 0 and rt < 50', 1:599]
+
+D.iter[1:10, 1:599]
+
+class ComfyIter(object):
+    def __init__(self, D):
+        self.D = D
+
+    def __getitem__(self, x):
+        
+
+
+
+
+D.global_TIC()
+
+
+D.min_frame
+D.max_frame
+D.plot_peak_counts()
+D[[1,2,10], 10:100]
+D[[1,2,10], [10, 50]]
+
+x = slice(2, 50, 3)
+x = slice(2, 50)
+range(x.start, x.stop, x.step)
+for f in D.frames.query('MsMsType == 0').index.get_level_values('frame'):
+    print(f)
+
+
+
+
+np.r_[slice(2, 50, 3)]
+np.r_[20]
+np.r_[[20, 340], 1:45]
+
+parse_slice(x)
+parse_slice(10)
+
 
 # and plot windows belonging to particular window groups
 D.plot_windows('window_gr in (1,4)')
@@ -66,6 +113,9 @@ D[[100,102,1042]]
 D[10:540:10]
 # scans are not implemented yet: I will need to get to C to make this efficient
 
+D.frame_array(10, 100, 918)
+
+
 # this concatenates the frames/windows that you want from this generator:
 it = D.iter_arrays(frames=slice(1000,1100))
 print(next(it))
@@ -74,6 +124,31 @@ print(next(it))
 it = D.iter_dfs(frames=slice(1000,1100))
 print(next(it))
 print(next(it))
+
+np.r_[1:10]
+it = D.iter_arrays(10)
+next(it)
+D[10]
+np.r_[10:23]
+
+
+np.r_[np.r_[10]]
+D.array(10)
+
+list(D.iter_arrays(np.r_[10]))
+
+D.array(frames=[10])
+
+frames = 10
+
+np.concatenate(list(D.iter_arrays(frames)), axis=0)
+
+D.array(frames=[10,20])
+frames = np.r_[[10,20], 12]
+frames.sort()
+
+
+
 
 # to get some scans:
 # let's find the most populated scan in the most intense frame

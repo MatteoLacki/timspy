@@ -8,6 +8,7 @@ from pathlib import Path
 import vaex as vx
 
 from timsdata import TimsData
+from timsdata.slice_ops import parse_idx
 from rmodel.polyfit import polyfit
 
 from .iterators import ranges
@@ -28,14 +29,17 @@ class AdvancedTims(TimsData):
                                                     'Id':'frame'}).sort_values('frame').set_index('frame')
         self.min_frame = self.frames.index.min()
         self.max_frame = self.frames.index.max()
+        self.border_frames = self.min_frame, self.max_frame 
         self.min_scan = 0
         max_scan = self.frames.NumScans.unique()
         if len(max_scan) != 1:
             raise RuntimeError("Number of TIMS pushes is not constant. This is not the class you want to instantiate on this data.")
         self.max_scan = max_scan[0]
+        self.border_scans = self.min_scan, self.max_scan
         self.fit_frame2rt_model()
         self.fit_scan2im_model()
         self.fit_mzIdx2mz_model()
+
 
     def _get_mz_frames(self, min_mz=100, max_mz=4000, mass_indices_cnt=1000, frames_no=40):
         minIdx, maxIdx = self.mzToIndex(1, [min_mz, max_mz]).astype(int)
@@ -43,6 +47,7 @@ class AdvancedTims(TimsData):
         frames      = np.linspace(self.min_frame, self.max_frame, frames_no).astype(int)
         indexToMz   = np.vectorize(self.indexToMz, signature='(),(i)->(i)')
         return indexToMz(frames, massIndices)
+
 
     def _estimate_T1_impact(self, min_mz=100, max_mz=4000, mass_indices_cnt=1000, frames_no=40):
         """Estimate models mz[f,idx] = mz[1,idx] ( T1[f]/T1[1] )**B.
@@ -58,10 +63,12 @@ class AdvancedTims(TimsData):
         lognorm_T1 = np.log(T1) - np.log(T1[0])
         return lognorm_T1.dot( np.subtract(logMZ, logMZ[0,:]) )
 
+
     def _absolute_difference_of_mz(self, min_mz=100, max_mz=4000, mass_indices_cnt=1000, frames_no=40):
         """Find the maximal difference between m/z for diffent mass indices for different frames."""
         MZ = self._get_mz_frames(min_mz, max_mz, mass_indices_cnt, frames_no)
         return np.abs(MZ - MZ[0,:]).max()
+
 
     def _absolute_difference_of_im(self, frames_no=40):
         """Find the maximal difference between im for diffent scans for different frames."""
@@ -71,7 +78,7 @@ class AdvancedTims(TimsData):
         IM = scan2im(frames, scans)
         return np.abs(IM - IM[0,:]).max()        
 
-    @lru_cache(maxsize=1)
+
     def frames_no(self):
         """Return the number of frames.
 
@@ -80,28 +87,28 @@ class AdvancedTims(TimsData):
         """
         return len(self.frames)
 
-    def frame_indices(self):
-        return self.frames.index.get_level_values(0).unique().values
 
     @lru_cache(maxsize=1)
-    def ms1frames(self):
+    def MS1_frameNumbers(self):
         """Get the numbers of frames in MS1.
         
         Returns:
-            set of numbers of frames in MS1.
+            np.array: numbers of frames in MS1.
         """
         F = self.frames
         return F.index.get_level_values('frame')[F.MsMsType == 0].unique().values
 
+
     @lru_cache(maxsize=1)
-    def ms2frames(self):
+    def MS2_frameNumbers(self):
         """Get the numbers of frames in MS2.
         
         Returns:
-            set of numbers of frames in MS2.
+            np.array: numbers of frames in MS2.
         """
         F = self.frames
         return F.index.get_level_values('frame')[F.MsMsType == 9].unique().values
+
 
     def frame2rt(self, frames):
         """Translate frame number to a proper retention time.
@@ -111,6 +118,7 @@ class AdvancedTims(TimsData):
         """
         frames = np.array(frames) + 1
         return self.frames.rt.values[frames]
+
 
     def rt2frame(self, rts):
         """Translate frame number to a proper retention time.
@@ -122,8 +130,10 @@ class AdvancedTims(TimsData):
         assert np.logical_and(0 <= rts, rts <= self.frames.rt.max()).all(), "retention times out of range of the experiment."
         return np.searchsorted(self.frames.rt, rts)+1
 
+
     def __repr__(self):
         return f"{self.__class__.__name__}({self.frames_no()} frames)"
+
 
     @lru_cache(maxsize=1)
     def global_TIC(self):
@@ -132,20 +142,22 @@ class AdvancedTims(TimsData):
         Returns:
             int: Total Ion Current value.
         """
-        s,S,f,F = self.min_scan, self.max_scan, self.min_frame, self.max_frame
-        return sum(self.get_TIC(f, s, S, True) for f in range(f, F + 1))
+        s,S = self.border_scans
+        f,F = self.border_frames
+        return sum(self.frameTIC(f, s, S, True) for f in range(f, F+1))
+
 
     @lru_cache(maxsize=1)
-    def count_peaks(self):
+    def count_all_peaks(self):
         """Count all the peaks in the database.
 
         Returns:
             int: number of peaks.
         """
-        smin, smax = self.min_scan, self.max_scan
-        fmin, fmax = self.min_frame, self.max_frame
-        return int(sum(self.count_peaks_per_frame_scanRange(f, smin, smax)
-                       for f in range(fmin, fmax+1)))
+        s, S = self.border_scans
+        f, F = self.border_frames
+        return int(sum(self.count_peaks(f,s,S) for f in range(f, F+1)))
+
 
     def fit_mzIdx2mz_model(self, mz_min=0, mz_max=3000, deg=2, prox_grid_points=1000):
         """Get a model that translates mass indices (time) into mass to charge ratios.
@@ -164,16 +176,19 @@ class AdvancedTims(TimsData):
         mz = self.indexToMz(1, mzIdx)
         self.mzIdx2mz_model = polyfit(mzIdx, mz, deg=deg)
 
+
     def fit_frame2rt_model(self, deg=5):
         """Fit a model that will change frame numbers to retention time values."""
         fr = np.arange(self.min_frame, self.max_frame+1)
         rt = self.frames.rt.values
         self.frame2rt_model = polyfit(fr, rt, deg=deg)
 
+
     def fit_scan2im_model(self, deg=4):
         scans = np.arange(self.min_scan, self.max_scan+1)
         ims = self.scan2im(scans)
         self.scan2im_model = polyfit(scans, ims, deg=deg)
+
 
     @lru_cache(maxsize=64)
     def table2df(self, name):
@@ -184,6 +199,7 @@ class AdvancedTims(TimsData):
         """
         return table2df(self.conn, name)
 
+
     def mzIdx2mz(self, mz_idx, frame=1):
         """Translate mass indices (flight times) to mass over charge ratios.
 
@@ -192,6 +208,7 @@ class AdvancedTims(TimsData):
             frame (integer): for which frame this calculations should be performed. These are very stable across
         """
         return self.indexToMz(frame, mz_idx)
+
 
     def mz2mzIdx(self, mz, frame=1):
         """Translate mass over charge ratios to mass indices (flight times).
@@ -202,6 +219,7 @@ class AdvancedTims(TimsData):
         """
         return self.mzToIndex(frame, mz).astype(np.uint32)
 
+
     def scan2im(self, scan, frame=1):
         """Translate scan numbers to ion mobilities.
 
@@ -211,6 +229,7 @@ class AdvancedTims(TimsData):
         """
         return self.scanNumToOneOverK0(frame, scan)
 
+
     def im2scan(self, im, frame=1):
         """Translate ion mobilities to scan numbers.
 
@@ -219,6 +238,7 @@ class AdvancedTims(TimsData):
             frame (integer): for which frame this calculations should be performed. These do not change accross the experiments actually.
         """
         return self.oneOverK0ToScanNum(frame, im).astype(np.uint32)
+
 
     def frame_scan_mzIdx_I_df(self, frame, scan_begin, scan_end):
         """Get a data frame with measurements for a given frame and scan region.
@@ -236,6 +256,7 @@ class AdvancedTims(TimsData):
         out = pd.DataFrame(self.frame_array(frame, scan_begin, scan_end))
         out.columns = ('frame', 'scan', 'mz_idx','i')
         return out
+
 
     def plot_models(self, show=True):
         """Plot model fittings.
@@ -257,34 +278,39 @@ class AdvancedTims(TimsData):
         if show:
             plt.show()
 
-    def iter_arrays(self, frames):
-        """Iterate over arrays with TDF data.
+
+    def iter_dfs(self, *args, **kwds):
+        """Iterate over data frames with TDF data.
         
-        Args:
-            frames (int,iterable,slice): Frames to restrict to.
+        Arguments like for 'self.get_frame_scanMin_scanMax'.
 
         Yields:
-            A data array with .
+            A flow of numpy arrays.
         """
-        for f in np.r_[frames]:
-            yield self.frame_array(f, self.min_scan, self.max_scan)
+        for A in self.iter_arrays(*args, **kwds):
+            F = pd.DataFrame(A)
+            F.columns = ('frame', 'scan', 'mz_idx', 'i')
+            yield F
+
 
     def __getitem__(self, x):
-        return_array = False
         if isinstance(x, tuple):
-            frames, array_or_df = x
-            return_array = array_or_df == 'array'
+            if len(x) == 2:
+                if isinstance(x[0], str):
+                    frames = self.frames.query(x[0]).index.get_level_values('frame')
+                    x = (frames, x[1])
+                arr = super().__getitem__(x)
+            else:
+                raise Warning('Strange arguments.')
         else:
-            frames = x
-        out_array = np.concatenate(list(self.iter_arrays(frames)), axis=0)
-        if return_array:
-            return out_array
-        else:
-            out_df = pd.DataFrame(out_array)
-            out_df.columns = 'frame', 'scan', 'mz_idx', 'i'
-            return out_df
+            s, S = self.border_scans
+            arr = super().__getitem__((x, slice(s,S)))
+        res = pd.DataFrame(arr)
+        res.columns = 'frame', 'scan', 'mz_idx', 'i'
+        return res
 
-    def array(self, frames=slice(None), filter_frames=''):
+
+    def array(self, frames, filter_frames=''):
         """Return a numpy array with given data.
 
         Arguments like for 'self.get_frame_scanMin_scanMax'.
@@ -301,6 +327,7 @@ class AdvancedTims(TimsData):
         else:
             return np.concatenate(list(self.iter_arrays(frames)), axis=0)
 
+
     def df(self, *args, **kwds):
         """Return a data frame with a selection of data.
 
@@ -313,18 +340,6 @@ class AdvancedTims(TimsData):
         df.columns = ('frame', 'scan', 'mz_idx', 'i')
         return df
 
-    def iter_dfs(self, *args, **kwds):
-        """Iterate over data frames with TDF data.
-        
-        Arguments like for 'self.get_frame_scanMin_scanMax'.
-
-        Yields:
-            A flow of numpy arrays.
-        """
-        for A in self.iter_arrays(*args, **kwds):
-            F = pd.DataFrame(A)
-            F.columns = ('frame', 'scan', 'mz_idx', 'i')
-            yield F
 
     def plot_overview(self, min_frame, max_frame, show=True):
         """Plot overview."""
@@ -341,51 +356,6 @@ class AdvancedTims(TimsData):
         if show:
             plt.show()
 
-    def frame_arrays2(self, frame, scan_begin, scan_end, raw=False):
-        x = self.get_peakCnts_massIdxs_intensities_array(frame,
-                                                         scan_begin,
-                                                         scan_end,
-                                                         False)
-        d = scans_no = scan_end-scan_begin
-        peak_cnts = x[:scans_no]
-        peak_cnts = peak_cnts.astype(np.int)
-        tot_len = int(peak_cnts.sum())
-
-        masses = np.empty(shape=(tot_len,), dtype=np.uint32)
-        intensities = np.empty(shape=(tot_len,), dtype=np.uint32)
-        m = 0
-        for npeaks in peak_cnts[peak_cnts>0]:
-            masses[m:m+npeaks] = x[d:d+npeaks]
-            d += npeaks
-            intensities[m:m+npeaks] = x[d:d+npeaks]
-            d += npeaks
-            m += npeaks
-        masses = self.indexToMz(frame, masses)
-        im_scans = self.scanNumToOneOverK0(frame,
-                                           np.repeat(np.arange(scan_begin,scan_end), peak_cnts))
-        return im_scans, masses, intensities
-
-
-    def frame_arrays3(self, frame, scan_begin, scan_end):
-        x = self.get_peakCnts_massIdxs_intensities_array(frame,
-                                                         scan_begin,
-                                                         scan_end,
-                                                         False)
-        d = scans_no = scan_end-scan_begin
-        peak_cnts = x[:scans_no]
-        peak_cnts = peak_cnts.astype(np.int)
-        tot_len = int(peak_cnts.sum())
-        masses = np.empty(shape=(tot_len,), dtype=np.uint32)
-        intensities = np.empty(shape=(tot_len,), dtype=np.uint32)
-        m = 0
-        for npeaks in peak_cnts[peak_cnts>0]:
-            masses[m:m+npeaks] = x[d:d+npeaks]
-            d += npeaks
-            intensities[m:m+npeaks] = x[d:d+npeaks]
-            d += npeaks
-            m += npeaks
-        im_scans = np.repeat(np.arange(scan_begin,scan_end), peak_cnts)
-        return im_scans, masses, intensities
 
     def to_hdf5(self, out_folder, min_frame=None, max_frame=None, step=1000):
         """Dump project project to hdf5.
@@ -409,13 +379,15 @@ class AdvancedTims(TimsData):
             vx_df.export_hdf5(path=path)
             del vx_df, pd_df
 
+
     @lru_cache(maxsize=1)
-    def peak_counts(self):
+    def count_all_peaks(self):
         """Get the number of peaks detected per each (frame,scan)."""
         frames = range(self.min_frame, self.max_frame+1)
-        s, S = self.min_scan, self.max_scan
-        return pd.DataFrame(np.vstack([self.get_peakCnts_massIdxs_intensities_array(f,s,S)[s:S]
+        s, S = self.border_scans
+        return pd.DataFrame(np.vstack([self.peakCnts_massIdxs_intensities(f,s,S)[s:S]
                                        for f in frames]), index=frames)
+
 
     def plot_peak_counts(self, binary=False, show=True):
         """
@@ -426,16 +398,16 @@ class AdvancedTims(TimsData):
             binary (boolean): plots 1 if a scan contained intensity, 0 otherwise.
         """
         import matplotlib.pyplot as plt
-        SU = self.scan_usage()
+        SU = self.count_all_peaks()
         if binary:
             plt.axhline(y=self.max_scan, color='r', linestyle='-')
             plt.axhline(y=self.min_scan, color='r', linestyle='-')
         SSU = np.count_nonzero(SU, axis=1) if binary else SU.sum(axis=1)
         SSU_MS1 = SSU.copy()
-        SSU_MS1[self.ms2frames()] = 0
+        SSU_MS1[self.MS2_frameNumbers()] = 0
         SSU_MS2 = SSU.copy()
-        SSU_MS2[self.ms1frames()] = 0
-        f = self.frame_indices()
+        SSU_MS2[self.MS1_frameNumbers()] = 0
+        f = range(self.min_frame, self.max_frame+1)
         plt.vlines(f,0, SSU_MS1, colors='orange')
         plt.plot(f, SSU_MS2, c='grey')
         if show:
@@ -471,6 +443,7 @@ class TimsDIA(AdvancedTims):
         W.columns = 'group','scan_min','scan_max','mz_left','mz_right'
         self.min_scan = W.scan_min.min()
         self.max_scan = W.scan_max.max()
+        self.border_scans = self.min_scan, self.max_scan
         MS1 = pd.DataFrame({'group':     0,
                             'scan_min':  self.min_scan,
                             'scan_max':  self.max_scan,
@@ -530,6 +503,7 @@ class TimsDIA(AdvancedTims):
                 labs(fill='Window Group'))
         return plot
 
+
     def array(self, window_grs=slice(None), 
                     frames=slice(None),
                     windows=slice(None),
@@ -554,10 +528,10 @@ class TimsDIA(AdvancedTims):
                 F = F.drop(columns='window_gr')
                 arrays = [self.frame_array(f,s,S) for _,f,s,S in F.itertuples()]
             else:
-                s = self.min_scan
-                S = self.max_scan
+                s, S = self.border_scans
                 arrays = [self.frame_array(f,s,S) for _,f,_ in F.itertuples()]
             return np.concatenate(arrays, axis=0)
+
 
     def mzRange2windows(self, min_mz, max_mz):
         """Find numbers of windows covering the given m/z range.
@@ -570,6 +544,7 @@ class TimsDIA(AdvancedTims):
         """
         pass
         return
+
 
 
 class TimsDDA(AdvancedTims):
