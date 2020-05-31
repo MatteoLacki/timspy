@@ -2,3 +2,4 @@ timspy_ve
 promo
 *.egg-info
 __pycache__
+.python-version

@@ -17,7 +17,7 @@ from .sql import table2df
 
 
 
-class AdvancedTims(TimsData):
+class TimspyDF(TimsData):
     """TimsData that uses info about Frames."""
     def __init__(self, analysis_directory, use_recalibrated_state=False, **model_args):
         """Create an instance of the AdvancedTims class.
@@ -27,6 +27,8 @@ class AdvancedTims(TimsData):
             use_recalibrated_state (bool): No idea yet.
         """
         super().__init__(analysis_directory, use_recalibrated_state=False)
+        self.iter = ComfyIter(self.iter_data_frames)# this should be done as quickly as possible, as it overwrittes the super 'method'.
+        self.physIter = ComfyIter(self.iter_physical)
         self.frames = self.table2df('Frames').rename(columns={'Time':'rt',
                                                     'Id':'frame'}).sort_values('frame').set_index('frame')
         self.min_frame = self.frames.index.min()
@@ -37,33 +39,16 @@ class AdvancedTims(TimsData):
         if len(max_scan) != 1:
             raise RuntimeError("Number of TIMS pushes is not constant. This is not the class you want to instantiate on this data.")
         self.max_scan = max_scan[0]
+        self.max_non_empty_scan = self.frames.index[self.frames.MaxIntensity > 0][-1]
         self.border_scans = self.min_scan, self.max_scan
         self.fit_frame2rt_model()
         self.fit_scan2im_model()
         self.fit_tof2mz_model()
-        self.physIter = ComfyIter(self.iter_physical)
 
-    def iter_physical(self, x):
-        """Query data based on physical units.
-
-        Instead of frame number, slice number, you can select data based on retention time and drift times.
-
-        Args:
-            x (slice): Range of retention times and drift times to chose from.
-
-        Yields:
-            pandas.DataFrame: Data frame with columns containing retention time, drift time, mass to charge ratio, and intensity of the required data.
-        """
-        pass
-
-    def phys(self, x):
-        arrays = list(self.iter_physical(x))
-        if arrays:
-            return np.concatenate(arrays)
-        else:
-            return np.empty(shape=(0,4), dtype=np.int64)
-
-    physical = phys
+    @property
+    @lru_cache(maxsize=1)
+    def min_max_frames(self):
+        return pd.concat([self[1], self[self.max_non_empty_scan]])
 
     def _get_mz_frames(self, min_mz=100, max_mz=4000, mass_indices_cnt=1000, frames_no=40):
         minIdx, maxIdx = self.mzToIndex(1, [min_mz, max_mz]).astype(int)
@@ -155,8 +140,20 @@ class AdvancedTims(TimsData):
         return np.searchsorted(self.frames.rt, rts)+1
 
 
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self.frames_no()} frames)"
+    def __repr__(self, k=3):
+        """Represent the object."""
+        N = self.peak_count()
+        X = self.min_max_frames
+        W = X.head(k)
+        Z = X.tail(k)
+        Z.index = range(N-1-k, N-1)
+        W = pd.concat([W,Z])
+        w = repr(W).split('\n')[:k+1]
+        z = repr(W).split('\n')[k+1:]
+        w.append('.' * len(z[-1]))
+        r = '\n'.join(w + z)
+        r += f'\n\n[frames {self.min_frame}:{self.max_frame}, scans {self.min_scan}:{self.max_scan}]'
+        return r
 
 
     @lru_cache(maxsize=1)
@@ -172,15 +169,13 @@ class AdvancedTims(TimsData):
 
 
     @lru_cache(maxsize=1)
-    def count_all_peaks(self):
+    def peak_count(self):
         """Count all the peaks in the database.
 
         Returns:
             int: number of peaks.
         """
-        s, S = self.border_scans
-        f, F = self.border_frames
-        return int(sum(self.count_peaks(f,s,S) for f in range(f, F+1)))
+        return self.frames.NumPeaks.sum()
 
 
     def fit_tof2mz_model(self, mz_min=0, mz_max=3000, deg=2, prox_grid_points=1000):
@@ -390,9 +385,33 @@ class AdvancedTims(TimsData):
         """Iterate over MS1 frames."""
         yield from self.iter['MsMsType == 0']
 
+
     def iter_MS2(self):
         """Iterate over MS1 frames."""
         yield from self.iter['MsMsType == 9']
+
+
+    def iter_physical(self, x):
+        """Query data based on physical units.
+
+        Instead of frame number, slice number, you can select data based on retention time and drift times.
+
+        Args:
+            x (slice): Range of retention times and drift times to chose from.
+
+        Yields:
+            pandas.DataFrame: Data frame with columns containing retention time, drift time, mass to charge ratio, and intensity of the required data.
+        """
+        pass
+
+    def phys(self, x):
+        dfs = list(self.iter_physical(x))
+        if dfs:
+            return pd.concat(dfs)
+        else: 
+            return pd.DataFrame(columns=('frame', 'scan', 'tof', 'i'))
+
+    physical = phys
 
 
     #TODO: this can be done similarly to how VAEX does it.
@@ -470,7 +489,7 @@ class AdvancedTims(TimsData):
             plt.show()
 
 
-class TimsDIA(AdvancedTims):
+class TimsDIA(TimspyDF):
     """Data Independent Acquisition on TIMS."""
     def __init__(self, analysis_directory, use_recalibrated_state=False):
         """Construct TimsDIA.
@@ -559,34 +578,33 @@ class TimsDIA(AdvancedTims):
                 labs(fill='Window Group'))
         return plot
 
+    # def array(self, window_grs=slice(None), 
+    #                 frames=slice(None),
+    #                 windows=slice(None),
+    #                 filter_frames=''):
+    #     """Return a numpy array with given data.
 
-    def array(self, window_grs=slice(None), 
-                    frames=slice(None),
-                    windows=slice(None),
-                    filter_frames=''):
-        """Return a numpy array with given data.
+    #     Arguments like for 'self.get_frame_scanMin_scanMax'.
 
-        Arguments like for 'self.get_frame_scanMin_scanMax'.
-
-        Returns:
-            np.array: an array with four columns: frame, scan, mass index (flight time), and intensity.
-        """
-        if window_grs == slice(None) and windows==slice(None):
-            return super().array(frames=frames, filter_frames=filter_frames)
-        else:
-            F = self.frames.loc[(frames, window_grs),:]
-            if filter_frames:
-                F = F.query(filter_frames)
-            F = F.index.to_frame(index=False)
-            if windows != slice(None):
-                W = self.windows.loc[(windows, window_grs),['scan_min', 'scan_max']]
-                F = F.merge(W, on='window_gr')
-                F = F.drop(columns='window_gr')
-                arrays = [self.frame_array(f,s,S) for _,f,s,S in F.itertuples()]
-            else:
-                s, S = self.border_scans
-                arrays = [self.frame_array(f,s,S) for _,f,_ in F.itertuples()]
-            return np.concatenate(arrays, axis=0)
+    #     Returns:
+    #         np.array: an array with four columns: frame, scan, mass index (flight time), and intensity.
+    #     """
+    #     if window_grs == slice(None) and windows==slice(None):
+    #         return super().array(frames=frames, filter_frames=filter_frames)
+    #     else:
+    #         F = self.frames.loc[(frames, window_grs),:]
+    #         if filter_frames:
+    #             F = F.query(filter_frames)
+    #         F = F.index.to_frame(index=False)
+    #         if windows != slice(None):
+    #             W = self.windows.loc[(windows, window_grs),['scan_min', 'scan_max']]
+    #             F = F.merge(W, on='window_gr')
+    #             F = F.drop(columns='window_gr')
+    #             arrays = [self.frame_array(f,s,S) for _,f,s,S in F.itertuples()]
+    #         else:
+    #             s, S = self.border_scans
+    #             arrays = [self.frame_array(f,s,S) for _,f,_ in F.itertuples()]
+    #         return np.concatenate(arrays, axis=0)
 
 
     def mzRange2windows(self, min_mz, max_mz):
@@ -603,7 +621,7 @@ class TimsDIA(AdvancedTims):
 
 
 
-class TimsDDA(AdvancedTims):
+class TimsDDA(TimspyDF):
     """Data Dependent Acquisition on TIMS."""
     pass
 
