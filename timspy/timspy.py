@@ -260,23 +260,33 @@ class AdvancedTims(TimsData):
         return out
 
 
-    def plot_models(self, show=True):
+    def plot_models(self, horizontal=True, legend=True, show=True):
         """Plot model fittings.
 
         Args:
             show (boolean): Show the plot or only append it to the current canvas.
         """
         import matplotlib.pyplot as plt
-        fig, (ax1, ax2, ax3) = plt.subplots(1, 3)
+        import matplotlib.ticker as mtick
+        if horizontal:
+            fig, (ax1, ax2, ax3) = plt.subplots(1,3)
+        else:
+            fig, (ax1, ax2, ax3) = plt.subplots(3,1)
         plt.sca(ax1)
-        self.mzIdx2mz_model.plot(show=False, label='Mass Index vs M/Z')
-        plt.legend()
-        plt.sca(ax2)
         self.frame2rt_model.plot(show=False, label='Frame vs Retention Time')
-        plt.legend()
-        plt.sca(ax3)
+        ax1.xaxis.set_major_formatter(mtick.FormatStrFormatter('%.2e'))
+        if legend:
+            plt.legend()
+        plt.sca(ax2)
         self.scan2im_model.plot(show=False, label='Scan No vs Drift Time')
-        plt.legend()
+        ax2.xaxis.set_major_formatter(mtick.FormatStrFormatter('%.2e'))
+        if legend:
+            plt.legend()
+        plt.sca(ax3)
+        self.mzIdx2mz_model.plot(show=False, label='Mass Index vs M/Z')
+        ax3.xaxis.set_major_formatter(mtick.FormatStrFormatter('%.2e'))
+        if legend:
+            plt.legend()
         if show:
             plt.show()
 

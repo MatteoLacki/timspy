@@ -32,27 +32,47 @@ D.plot_windows()
 D.peakCnts_massIdxs_intensities(100, 100, 101)
 D.MS1_frameNumbers()
 
+plt.style.use('ggplot')
+plt.style.use('default')
+D.plot_models(True, False, True)
+plt.savefig('/home/matteo/Projects/bruker/models_vertical.pdf', 
+    transparent=True,
+    papertype='a1',
+    dpi=1000)
+
+?plt.savefig
 # different indexing schemes.
 D.frames
 list(D.iter[1:5, 100:110])
 list(D.iter[1:4])
 list(D.iter['rt > 10 and rt < 20'])
 D[1:5, 1:100]
-D[1:5]
+D[1:100]
 D[1:5, [33, 50]]
 D[(i**2 for i in range(10)), [33, 50]]
 D[[1,2,10], 10:100]
 D[[1,2,10], [10, 50]]
 D['rt > 10 and rt < 50', 1:599]
 D['MsMsType == 0 and rt < 50', 1:599]
-D.iter['MsMsType == 0 and rt < 50', 1:599]
-D.iterMS1()
-
+it = D.iter['MsMsType == 0 and rt < 50', 1:599]
+next(it)
+ms1it = D.iter_MS1()
+next(ms1it)
+next(ms1it)
 
 D.plot_overview(1000,2000)
 D.global_TIC()
 D.plot_peak_counts()
 
+X = D[1:100]
+
+X['rt'] = D.frame2rt_model(X.frame)
+X['im'] = D.scan2im_model(X.scan)
+X['mz'] = D.mzIdx2mz_model(X.mz_idx)
+
+X.physical[0.190156:]
+X = X.query('rt >= 0.2 and rt <= 10')
+X[['rt','im','mz']]
 
 x = slice(2, 50, 3)
 x = slice(2, 50)
