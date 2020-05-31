@@ -22,4 +22,7 @@ setup(  name='timspy',
                           'scipy',
                           'timsdata',
                           'rmodel'],
+        extras_require={
+            'plots': ('matplotlib >= 3.0.0'),
+        },
 )

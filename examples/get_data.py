@@ -1,11 +1,14 @@
-"""How to get the data."""
+"""How to get the data.
+
+UPDATE THIS!!!
+"""
 %load_ext autoreload
 %autoreload 2
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from pathlib import Path
-import vaex as vx
+# import vaex as vx
 
 from timspy.timspy import TimsDIA
 from timspy.plot import plot_spectrum

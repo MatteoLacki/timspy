@@ -6,10 +6,10 @@ from math import inf
 import numpy as np
 import pandas as pd
 from pathlib import Path
-import vaex as vx
 
 from timsdata import TimsData
 from timsdata.slice_ops import parse_idx
+from timsdata.iterators import ComfyIter
 from rmodel.polyfit import polyfit
 
 from .iterators import ranges
@@ -40,8 +40,30 @@ class AdvancedTims(TimsData):
         self.border_scans = self.min_scan, self.max_scan
         self.fit_frame2rt_model()
         self.fit_scan2im_model()
-        self.fit_mzIdx2mz_model()
+        self.fit_tof2mz_model()
+        self.physIter = ComfyIter(self.iter_physical)
 
+    def iter_physical(self, x):
+        """Query data based on physical units.
+
+        Instead of frame number, slice number, you can select data based on retention time and drift times.
+
+        Args:
+            x (slice): Range of retention times and drift times to chose from.
+
+        Yields:
+            pandas.DataFrame: Data frame with columns containing retention time, drift time, mass to charge ratio, and intensity of the required data.
+        """
+        pass
+
+    def phys(self, x):
+        arrays = list(self.iter_physical(x))
+        if arrays:
+            return np.concatenate(arrays)
+        else:
+            return np.empty(shape=(0,4), dtype=np.int64)
+
+    physical = phys
 
     def _get_mz_frames(self, min_mz=100, max_mz=4000, mass_indices_cnt=1000, frames_no=40):
         minIdx, maxIdx = self.mzToIndex(1, [min_mz, max_mz]).astype(int)
@@ -161,7 +183,7 @@ class AdvancedTims(TimsData):
         return int(sum(self.count_peaks(f,s,S) for f in range(f, F+1)))
 
 
-    def fit_mzIdx2mz_model(self, mz_min=0, mz_max=3000, deg=2, prox_grid_points=1000):
+    def fit_tof2mz_model(self, mz_min=0, mz_max=3000, deg=2, prox_grid_points=1000):
         """Get a model that translates mass indices (time) into mass to charge ratios.
 
         Args:
@@ -176,7 +198,7 @@ class AdvancedTims(TimsData):
         mzIdx_step = (mzIdx_max - mzIdx_min) // 1000
         mzIdx = np.arange(mzIdx_min, mzIdx_max, mzIdx_step)
         mz = self.indexToMz(1, mzIdx)
-        self.mzIdx2mz_model = polyfit(mzIdx, mz, deg=deg)
+        self.tof2mz_model = polyfit(mzIdx, mz, deg=deg)
 
 
     def fit_frame2rt_model(self, deg=5):
@@ -202,14 +224,14 @@ class AdvancedTims(TimsData):
         return table2df(self.conn, name)
 
 
-    def mzIdx2mz(self, mz_idx, frame=1):
+    def tof2mz(self, tof, frame=1):
         """Translate mass indices (flight times) to mass over charge ratios.
 
         Args:
-            mz_idx (int,iterable,np.array,pd.Series): mass indices.
+            tof (int,iterable,np.array,pd.Series): time of flight indices.
             frame (integer): for which frame this calculations should be performed. These are very stable across
         """
-        return self.indexToMz(frame, mz_idx)
+        return self.indexToMz(frame, tof)
 
 
     def mz2mzIdx(self, mz, frame=1):
@@ -256,7 +278,7 @@ class AdvancedTims(TimsData):
             pandas.DataFrame: four-columns data frame.
         """
         out = pd.DataFrame(self.frame_array(frame, scan_begin, scan_end))
-        out.columns = ('frame', 'scan', 'mz_idx','i')
+        out.columns = ('frame', 'scan', 'tof','i')
         return out
 
 
@@ -283,7 +305,7 @@ class AdvancedTims(TimsData):
         if legend:
             plt.legend()
         plt.sca(ax3)
-        self.mzIdx2mz_model.plot(show=False, label='Mass Index vs M/Z')
+        self.tof2mz_model.plot(show=False, label='Mass Index vs M/Z')
         ax3.xaxis.set_major_formatter(mtick.FormatStrFormatter('%.2e'))
         if legend:
             plt.legend()
@@ -312,7 +334,7 @@ class AdvancedTims(TimsData):
         return s, S
 
 
-    def _iter(self, x):
+    def iter_data_frames(self, x):
         """Private iteration over arrays.
 
         You can call it explicitly, but better call it like D.iter[1:10, 100:200].
@@ -346,7 +368,7 @@ class AdvancedTims(TimsData):
                 frame = self.frame_array(frameNo,s,S)
                 if len(frame):
                     frame = pd.DataFrame(frame)
-                    frame.columns = ('frame', 'scan', 'mz_idx', 'i') 
+                    frame.columns = ('frame', 'scan', 'tof', 'i') 
                     yield frame
 
 
@@ -357,11 +379,11 @@ class AdvancedTims(TimsData):
             x (tuple): First element corresponds to iterable/slice of frames. Second element corresponds to slice/iterable of scans. For now, only selection by scan_begin:scan_end is supported.
         Returns:
             pd.DataFrame: Data frame with columns with frame numbers, scan numbers, mass indices, and intensities."""
-        dfs = list(self._iter(x))
+        dfs = list(self.iter_data_frames(x))
         if dfs:
             return pd.concat(dfs)
         else: 
-            return pd.DataFrame(columns=('frame', 'scan', 'mz_idx', 'i'))
+            return pd.DataFrame(columns=('frame', 'scan', 'tof', 'i'))
 
 
     def iter_MS1(self):
@@ -379,7 +401,7 @@ class AdvancedTims(TimsData):
         import matplotlib.pyplot as plt
 
         df = self[min_frame:max_frame]
-        df['mz'] = self.mzIdx2mz(df.mz_idx)
+        df['mz'] = self.mzIdx2mz(df.tof)
         df['im'] = self.scan2im(df.scan)
         X = df.groupby([round(df.im, 2), round(df.mz)]).i.sum().reset_index()
         im_res = len(X.im.unique())
@@ -398,11 +420,12 @@ class AdvancedTims(TimsData):
             min_frame (int): Minimal frame in selection for saving.
             max_frame (int): Maximal frame in selection for saving.
         """
+        import vaex as vx
         min_frame = self.min_frame if min_frame is None else min_frame
         max_frame = self.max_frame if max_frame is None else max_frame
         out_folder = Path(out_folder)
         out_folder.mkdir(parents=True, exist_ok=True)
-        types_remap = {'frame':'uint16', 'scan':'uint16', 'mz_idx':'uint32', 'i':'uint32'}
+        types_remap = {'frame':'uint16', 'scan':'uint16', 'tof':'uint32', 'i':'uint32'}
         #TODO: types should be remaped earlier!
         for f, F in ranges(min_frame, max_frame+1, step):
             pd_df = self[f:F]
