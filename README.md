@@ -47,7 +47,7 @@ which results in
 ![](https://github.com/MatteoLacki/timspy/blob/devel/models.png "Comparing Human-Yeast-Ecoli Proteomes")
 
 Now, TimsPy offers the possibility to easily obtain sub-sets of the very big data frame shown above.
-The general convention for extracting data is `D[frames, scans]`:
+The general convention for extracting data is `D[frames, scans]`.
 For example, after calling `print(D)` you already know, that you can choose a scan from a range between 1 and 11553, and scans between 0 and 918.
 Now, exploring first 100 frames and scans between 100 and 500 could be done as simple as by calling:
 ```{python}
