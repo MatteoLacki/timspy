@@ -209,6 +209,8 @@ D.plot_peak_counts()
 ```
 ![](https://github.com/MatteoLacki/timspy/blob/devel/peak_counts.png "Counts of peaks in MS1 and MS2 experiments.")
 
+In orange, you see the sum of intensities for each frame (Total Ion Current) for MS1 frames, and in gray for MS2 frames.
+
 These are not fast methods.
 From our experience, it's much faster to save data to hdf5 format and then use vaex to plot it interactively.
 This will be coming up soon, so stay tuned!
