@@ -193,6 +193,10 @@ D.plot_peak_counts()
 ```
 ![](https://github.com/MatteoLacki/timspy/blob/devel/overview.png "Counts of peaks in MS1 and MS2 experiments.")
 
+These are not fast methods.
+From our experience, it's much faster to save data to hdf5 format and then use vaex to plot it interactively.
+This will be coming up soon, so stay tuned!
+
 ### Plans
 We are working on support for the vaex module on several levels.
 Even when you sleep, our team of commited coder(s) is working his (their) way through the unknown.
