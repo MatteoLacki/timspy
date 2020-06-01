@@ -1,13 +1,13 @@
-### TimsPy
+# TimsPy
 
 A data science friendly data access to timsTOF Pro mass spectrometry data.
 
-# Requirements
+### Requirements
 
 TimsPy is compatible with Windows and Linux.
 MacOS ain't supported.
 
-# What gives?
+### What gives?
 
 Simple way to get data out of results collected with your Bruker timsTOF Pro from Python.
 For example:
@@ -54,13 +54,7 @@ print(X)
 #      frame  scan     tof   i                                                                  
 # 0        1   101  340222   9                                                                  
 # 1        1   103   76314   9                                                                  
-# 2        1   103  267974   9                                                                  
-# 3        1   104  285432   9                                                                  
-# 4        1   105   46454   9                                                                  
 # ..     ...   ...     ...  ..                                                                  
-# 393     99   499  230044  52                                                                  
-# 394     99   499  230710  22                                                                  
-# 395     99   499  233908  45                                                                  
 # 396     99   499  233956  59                                                                  
 # 397     99   499  300328   9                                                                  
 #                                                                                               
@@ -74,13 +68,7 @@ print(X)
 #       frame  scan     tof   i                                                                 
 # 0         1    33  312260   9
 # 1         1    34  220720   9
-# 2         1    34  261438   9
-# 3         1    36   33072   9
-# 4         1    36  242110   9
 # ...     ...   ...     ...  ..
-# 8391     99   913  200278   9
-# 8392     99   914  101230  65
-# 8393     99   914  257396   9
 # 8394     99   914  313598   9
 # 8395     99   917  354548   9
 # 
@@ -93,21 +81,48 @@ print(X)
 #        frame  scan     tof   i                                                                
 # 0       1000    35  257054   9
 # 1       1000    35  373510   9
-# 2       1000    44  251548   9
-# 3       1000    46  104446   9
-# 4       1000    51  110434   9
 # ...      ...   ...     ...  ..
-# 40097   5000   909  319446   9
-# 40098   5000   911  173796   9
-# 40099   5000   912  155300   9
 # 40100   5000   914   71976  99
 # 40101   5000   915  107966   9
 # 
 # [61365 rows x 4 columns]
 ```
 
+Also, note that if you select to much data, you will run out of RAM.
+That's not nice.
+To by-pass this, for the time being, TimsPy offers the possibility to use Python iterators and explore the data one frame at a time.
+```{python}
+it = D.iter[:10000]
+print(next(it))
+#       frame  scan     tof    i
+# 0         1    33  312260    9
+# 1         1    34  220720    9
+# ...     ...   ...     ...  ...
+# 1599      1   915  233374    9
+# 1600      1   916  335348   77
+# 
+# [1601 rows x 4 columns]
 
-# Installation
+print(next(it))
+#       frame  scan     tof   i
+# 0         2    33   97298   9
+# 1         2    33  310524   9
+# ...     ...   ...     ...  ..
+# 6596      2   913   56442   9
+# 6597      2   915  172202   9
+# 
+# [6598 rows x 4 columns]
+```
+The `D.iter[...]` will accept anything `D[...]` would.
+The idea is, that you can easily do your operations in loops and be happy.
+
+
+### Plans
+We are working on support for the vaex module on several levels.
+Even when you sleep, our team of commited coder(s) is working his (their) way through the unknown.
+
+
+### Installation
 
 ```{bash}
 pip install timspy
@@ -133,8 +148,8 @@ pip install matplotlib plotnine timspy
 ```
 which seems much less of a hastle than figuring out how pypi internals work.
 
-# Too bloat?
+### Too bloat?
 
-Try double bloat! Joking, but we have a simpler module too.
+We have a simpler module too.
 Check out our [timsdata module](https://github.com/MatteoLacki/timsdata).
 It is a very small wrapper around Bruker's SDK and makes it easier to extract data only in numpy.arrays or pure pythonic objects.
