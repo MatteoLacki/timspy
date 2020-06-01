@@ -33,7 +33,17 @@ print(D)
 ```
 
 As suggested by this quick data-view, the basic idea behind TimsPy is to represent the data in the convenient format of pandas data.frames.
-
+As you can see, the whole data-set contains 404 183 875 measured ions (peaks).
+Each ion is described by the frame, tims' scan, time of flight index, and intensity.
+There are 11 553 frames, and 918 possible scans.
+Frames, scans, and time of flight indices can be translated into their physical equivalents.
+Frames correspond to retention times, scans to ion mobilities, and time of flights to mass over charge ratios.
+To visualize these dependencies, call (if you have matplotlib installed),
+```{python}
+D.plot_models()
+``` 
+which will result in something like this:
+![](https://github.com/MatteoLacki/timspy/blob/devel/models.png "Comparing Human-Yeast-Ecoli Proteomes")
 
 # Installation
 
@@ -50,6 +60,16 @@ git clone https://github.com/MatteoLacki/timspy
 cd timspy
 pip install -e .
 ```
+
+To install extra modules required for plotting (matplotlib, plotnine), use
+```{bash}
+pip install timspy[plots]
+```
+or install them manually with
+```{bash}
+pip install matplotlib plotnine timspy
+```
+which seems much less of a hastle than figuring out how pypi internals work.
 
 # Too bloat?
 

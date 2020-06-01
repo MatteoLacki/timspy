@@ -19,7 +19,7 @@ p = Path('/home/matteo/Projects/bruker/BrukerMIDIA/MIDIA_CE10_precursor/20190912
 TD = TimsData(p) # timsdata does not support :
 D = TimsPyDF(p) # timsdata does not support :
 # D = TimsDIA(p) # timsdata does not support :
-
+D.plot_models()
 X = D[100]
 # X = D.phys[1000:1010]
 X = D.biggest_frame
