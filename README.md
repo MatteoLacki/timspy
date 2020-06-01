@@ -4,7 +4,8 @@ A data science friendly data access to timsTOF Pro mass spectrometry data.
 
 ### Requirements
 
-TimsPy is compatible with Windows and Linux.
+USUALLY: TimsPy is compatible with Windows and Linux.
+HOWEVER: we are experience temporary problems on Windows, the devil's invention.
 MacOS ain't supported.
 
 ### What gives?
