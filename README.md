@@ -207,7 +207,7 @@ Also, you can plot peak counts
 ```{python}
 D.plot_peak_counts()
 ```
-![](https://github.com/MatteoLacki/timspy/blob/devel/overview.png "Counts of peaks in MS1 and MS2 experiments.")
+![](https://github.com/MatteoLacki/timspy/blob/devel/peak_counts.png "Counts of peaks in MS1 and MS2 experiments.")
 
 These are not fast methods.
 From our experience, it's much faster to save data to hdf5 format and then use vaex to plot it interactively.
