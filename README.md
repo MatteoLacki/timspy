@@ -10,6 +10,8 @@ MacOS ain't supported.
 ### What gives?
 
 Simple way to get data out of results collected with your Bruker timsTOF Pro from Python.
+This definitely ain't no rocket science, but is pretty useful!
+
 For example:
 
 ```{python}
@@ -116,10 +118,88 @@ print(next(it))
 The `D.iter[...]` will accept anything `D[...]` would.
 The idea is, that you can easily do your operations in loops and be happy.
 
+### Physical units
+You might not be entirely happy being stuck with the default non-physical indices that the SDK operates under the hood.
+We find them very nice, as they keep data smaller, but we get it, you want to see the physics!
+
+Get physical!
+The general convention for extracting data in physical units is to extract data in rectangles `D.phys[min_rt:max_rt, min_im:max_im]`.
+For example,
+```{python}
+X = D.phys[1:10. 0.7:1.5]
+print(X)
+#             rt        im           mz   i
+# 0     1.078353  1.600000  1352.120899  72
+# 1     1.078353  1.598858  1353.444087  34
+# ...        ...       ...          ...  ..
+# 7828  9.979100  0.611991   645.068941   9
+# 7829  9.979100  0.610869  1365.561858   9
+# 
+# [1479453 rows x 4 columns]
+```
+and you can get iterators too, as simple as:
+```{python}
+it = D.physIter[1:10]
+print(next(it))
+#              rt        im           mz    i                                                   
+# 0      1.078353  1.600000  1352.120899   72
+# 1      1.078353  1.598858  1353.444087   34
+# ...         ...       ...          ...  ...
+# 12843  1.078353  0.604139   247.034346   90
+# 12844  1.078353  0.603017    97.343304    9
+# 
+# [12845 rows x 4 columns]
+
+print(next(it))
+#              rt        im           mz   i                                                    
+# 0      1.185108  1.600000  1362.910106  19
+# 1      1.185108  1.600000  1371.681724  56
+# ...         ...       ...          ...  ..
+# 12261  1.185108  0.604139  1434.697864   9
+# 12262  1.185108  0.603017  1410.652404   9
+# 
+# [12263 rows x 4 columns]
+```
+
+### DIA experiments
+
+Data Independent Acquisition is a mode for performing the measurement in a consistent way, that assures a better, non-random coverage of the proteome.
+In particular, on timsTOF Pro the MS2 (fragmented) data is collected on windows.
+Want to see them? Don't use `TimsPyDF`, but a specialized subclass:
+```{python}
+p = '/path/to/brukers/folder/with/DIA/data.d')
+D = TimsDIA(p)
+D.plot_windows()
+```
+![](https://github.com/MatteoLacki/timspy/blob/devel/all_windows.png "DIA windows")
+Too many windows?
+
+```{python}
+D.plot_windows("window_gr in [1,5,10]")
+```
+![](https://github.com/MatteoLacki/timspy/blob/devel/windows_1_5_10.png "DIA windows 1, 5, and 10")
+
+### Basic plotting
+You can plot the overview of your experiment.
+To do that, select the minimal and maximal frames to plot,
+```{python}
+D.plot_overview(1000, 4000)
+```
+![](https://github.com/MatteoLacki/timspy/blob/devel/overview.png "DIA experiment overview")
+
+Also, you can plot peak counts
+```{python}
+D.plot_peak_counts()
+```
+![](https://github.com/MatteoLacki/timspy/blob/devel/overview.png "Counts of peaks in MS1 and MS2 experiments.")
 
 ### Plans
 We are working on support for the vaex module on several levels.
 Even when you sleep, our team of commited coder(s) is working his (their) way through the unknown.
+
+* Specialized methods for DDA experiments.
+* Better C++ integration
+* Intergration with vaex as a lazy alternative to pandas
 
 
 ### Installation

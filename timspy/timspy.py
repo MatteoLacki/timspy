@@ -558,7 +558,7 @@ class TimsPyDF(TimsData):
         import matplotlib.pyplot as plt
 
         df = self[min_frame:max_frame]
-        df['mz'] = self.mzIdx2mz(df.tof)
+        df['mz'] = self.tof2mz(df.tof)
         df['im'] = self.scan2im(df.scan)
         X = df.groupby([round(df.im, 2), round(df.mz)]).i.sum().reset_index()
         im_res = len(X.im.unique())
