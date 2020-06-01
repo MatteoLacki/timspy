@@ -19,7 +19,7 @@ from .sql import table2df
 
 
 
-class TimspyDF(TimsData):
+class TimsPyDF(TimsData):
     """TimsData that uses info about Frames."""
     def __init__(self, analysis_directory, use_recalibrated_state=False, **model_args):
         """Create an instance of the AdvancedTims class.
@@ -627,7 +627,7 @@ class TimspyDF(TimsData):
             plt.show()
 
 
-class TimsDIA(TimspyDF):
+class TimsDIA(TimsPyDF):
     """Data Independent Acquisition on TIMS."""
     def __init__(self, analysis_directory, use_recalibrated_state=False):
         """Construct TimsDIA.
@@ -759,7 +759,7 @@ class TimsDIA(TimspyDF):
 
 
 
-class TimsDDA(TimspyDF):
+class TimsDDA(TimsPyDF):
     """Data Dependent Acquisition on TIMS."""
     pass
 
