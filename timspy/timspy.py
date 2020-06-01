@@ -266,7 +266,7 @@ class TimspyDF(TimsData):
         return self.indexToMz(frame, tof)
 
 
-    def mz2mzIdx(self, mz, frame=1):
+    def mz2tof(self, mz, frame=1):
         """Translate mass over charge ratios to mass indices (flight times).
 
         Args:
@@ -429,6 +429,17 @@ class TimspyDF(TimsData):
         yield from self.iter['MsMsType == 9']
 
 
+    @property
+    def biggest_frame_number(self):
+        """Return the number of the frame with maximal number of recorded ions."""
+        return self.frames.NumPeaks.argmax() + 1
+
+
+    @property
+    def biggest_frame(self):
+        return self[self.biggest_frame_number]
+
+
     def iter_physical(self, x, append=False):
         """Query data based on physical units.
 
@@ -455,7 +466,6 @@ class TimspyDF(TimsData):
 
         frames = range(min_frame, max_frame)
         f, F = self.border_frames
-        print(frames)
 
         s = max(self.min_scan if im.stop  is None else self.im2scan([im.stop])[0]+1, self.min_scan)
         S = min(self.max_scan if im.start is None else self.im2scan([im.start])[0],  self.max_scan)
@@ -465,26 +475,76 @@ class TimspyDF(TimsData):
             if f <= frameNo <= F:
                 frame = self.frame_array(frameNo,s,S)
                 if len(frame):
-                    if append:
-                        frame = pd.DataFrame(frame, columns=('frame', 'scan', 'tof', 'i'))
-                        frame['rt'] = self.frame2rt(frame.frame[0])[0]
-                        frame['im'] = self.scan2im_model(frame.scan)
-                        frame['mz'] = self.tof2mz_model(frame.tof)
-                        yield frame
-                    else:
-                        X = pd.DataFrame(index=pd.RangeIndex(0,len(frame)),
-                                         columns=('rt', 'im', 'mz', 'i'),
-                                         dtype=np.float64)
-                        X.rt = self.frame2rt([frame[0,0]])[0]
-                        # X.im = self.scan2im_model(frame[:,1])
-                        X.im = self.scan2im(frame[:,1])
-                        X.mz = self.tof2mz_model(frame[:,2])
-                        X.i  = frame[:,3]
-                        del frame
-                        yield X
+                    yield self.makePhysical(frame, append=append)
+
+
+    def makePhysical(self, frame, append=False, tof2mz_model=False):
+        """Translate frame to physical quantities.
+
+        If you pass np.array and choose append, it will still get copied, because of creating a data frame, which is the default outcome.
+
+        Args:
+            frame (np.array, pd.DataFrame): Data frame or numpy array with columns 'frame', 'scan', 'tof', and 'i'.
+            append (boolean): Should the original data be appended?
+        Returns:
+            pd.Data.Frame: A data frame containing the original data and with physical units appended, or simply one translated into physical quantities.
+        """
+        assert frame.shape[0] > 0, "You passed in an empty frame."
+        if isinstance(frame, pd.core.frame.DataFrame):
+            assert all(n in frame.columns for n in ('frame', 'scan', 'tof', 'i')), "This data frame does not contain appropriately named columns."
+            if append:
+                frame['rt'] = self.frame2rt(frame.frame[0])[0]
+                frame['im'] = self.scan2im(frame.scan)
+                if tof2mz_model:
+                    frame['mz'] = self.tof2mz_model(frame.tof)
+                else:
+                    frame['mz'] = self.tof2mz(frame.tof)
+            else:
+                X = pd.DataFrame(index=pd.RangeIndex(0,len(frame)),
+                                 columns=('rt', 'im', 'mz', 'i'),
+                                 dtype=np.float64)
+                X.rt = self.frame2rt(frame.frame[0])[0]
+                X.im = self.scan2im(frame.scan)
+                # X.im = self.scan2im_model(frame[:,1])# slows things down!!!
+                if tof2mz_model:
+                    frame['mz'] = self.tof2mz_model(frame.tof)
+                else:
+                    frame['mz'] = self.tof2mz(frame.tof)
+                X.i  = frame.i
+                return X
+        elif isinstance(frame, np.ndarray):
+            assert frame.shape[1] == 4, "Wrong number of columns."
+            if append:
+                frame = pd.DataFrame(frame, columns=('frame', 'scan', 'tof', 'i'))
+                frame['rt'] = self.frame2rt(frame.frame[0])[0]
+                frame['im'] = self.scan2im(frame.scan)
+                frame['mz'] = self.tof2mz_model(frame.tof)
+                return frame
+            else:
+                X = pd.DataFrame(index=pd.RangeIndex(0,len(frame)),
+                                 columns=('rt', 'im', 'mz', 'i'),
+                                 dtype=np.float64)
+                X.rt = self.frame2rt([frame[0,0]])[0]
+                X.im = self.scan2im(frame[:,1])
+                if tof2mz_model:
+                    X.mz = self.tof2mz_model(frame[:,2])
+                else:
+                    X.mz = self.tof2mz(frame[:,2])
+                X.i  = frame[:,3]
+                return X
+        else:
+            raise Warning('frame was not a pandas.DataFrame, nor np.ndarray.')
 
 
     def physical(self, x):
+        """Return a data frame with selected frames and scans.
+
+        Args:
+            x (slice): Range of retention times and drift times to chose from.
+
+        Returns:
+            pd.Data.Frame: A data frame containing the data in physical units.
+        """
         dfs = list(self.iter_physical(x))
         if dfs:
             return pd.concat(dfs)
