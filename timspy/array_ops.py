@@ -45,3 +45,11 @@ def agg_mz_inc_spec(mz, I, round_dig=0):
             I_ = _I
             mz_ = _mz
     yield mz_, I_
+
+
+def which_min_geq(x, y):
+    return np.searchsorted(x, y, side='left')
+
+
+def which_max_leq(x,y):
+    return np.searchsorted(x, y, side='right')-1

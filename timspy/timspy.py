@@ -12,8 +12,10 @@ from timsdata.slice_ops import parse_idx
 from timsdata.iterators import ComfyIter
 from rmodel.polyfit import polyfit
 
+from .array_ops import which_min_geq, which_max_leq
 from .iterators import ranges
 from .sql import table2df
+
 
 
 
@@ -29,6 +31,7 @@ class TimspyDF(TimsData):
         super().__init__(analysis_directory, use_recalibrated_state=False)
         self.iter = ComfyIter(self.iter_data_frames)# this should be done as quickly as possible, as it overwrittes the super 'method'.
         self.physIter = ComfyIter(self.iter_physical)
+        self.phys = ComfyIter(self.physical)
         self.frames = self.table2df('Frames').rename(columns={'Time':'rt',
                                                     'Id':'frame'}).sort_values('frame').set_index('frame')
         self.min_frame = self.frames.index.min()
@@ -41,9 +44,13 @@ class TimspyDF(TimsData):
         self.max_scan = max_scan[0]
         self.max_non_empty_scan = self.frames.index[self.frames.MaxIntensity > 0][-1]
         self.border_scans = self.min_scan, self.max_scan
+        self.min_rt = self.frames.rt.min()
+        self.max_rt = self.frames.rt.max()
         self.fit_frame2rt_model()
         self.fit_scan2im_model()
         self.fit_tof2mz_model()
+        self.max_im, self.min_im = self.scan2im((self.min_scan, self.max_scan))
+
 
     @property
     @lru_cache(maxsize=1)
@@ -125,19 +132,48 @@ class TimspyDF(TimsData):
         Args:
             frames (int,list): frame numbers to translate.
         """
-        frames = np.array(frames) + 1
-        return self.frames.rt.values[frames]
+        frames = np.r_[frames]
+        return self.frames.rt[frames].values
 
-
+    #TODO: check it!
     def rt2frame(self, rts):
         """Translate frame number to a proper retention time.
 
         Args:
             frames (int,list): frame numbers to translate.
         """
-        rts = np.array(rts)
+        rts = np.r_[rts]
         assert np.logical_and(0 <= rts, rts <= self.frames.rt.max()).all(), "retention times out of range of the experiment."
         return np.searchsorted(self.frames.rt, rts)+1
+
+
+    def rt2supFrame(self, rts):
+        """Return the frame number for which the retention time bounds the provided retention time from above.
+
+        This function is vectorized over rts.
+        It provides the frame whose retention time is the least upper bound for the provided values in the space of all retention times greater than this one.
+
+        Args:
+            rts (np.array): Retention times for which to get the frames.
+
+        Returns:
+            np.array: Frame numbers.
+        """
+        return self.frames.index[ which_min_geq(self.frames.rt.values, np.r_[rts]) ].values
+
+
+    def rt2infFrame(self, rts):
+        """Return the frame number for which the retention time bounds the provided retention time from below.
+
+        This function is vectorized over rts.
+
+        Args:
+            rts (np.array): Retention times for which to get the frames.
+
+        Returns:
+            np.array: Frame numbers.
+        """
+        return self.frames.index[ which_max_leq(self.frames.rt.values, np.r_[rts]) ].values
 
 
     def __repr__(self, k=3):
@@ -198,7 +234,8 @@ class TimspyDF(TimsData):
 
     def fit_frame2rt_model(self, deg=5):
         """Fit a model that will change frame numbers to retention time values."""
-        fr = np.arange(self.min_frame, self.max_frame+1)
+        # fr = np.arange(self.min_frame, self.max_frame+1)
+        fr = self.frames.index
         rt = self.frames.rt.values
         self.frame2rt_model = polyfit(fr, rt, deg=deg)
 
@@ -243,9 +280,10 @@ class TimspyDF(TimsData):
         """Translate scan numbers to ion mobilities.
 
         Args:
-            scan (int,iterable,np.array,pd.Series): scans.
+            scan (list,np.array,pd.Series): scans.
             frame (integer): for which frame this calculations should be performed. These do not change accross the experiments actually.
         """
+        #TODO: check borders.
         return self.scanNumToOneOverK0(frame, scan)
 
 
@@ -391,7 +429,7 @@ class TimspyDF(TimsData):
         yield from self.iter['MsMsType == 9']
 
 
-    def iter_physical(self, x):
+    def iter_physical(self, x, append=False):
         """Query data based on physical units.
 
         Instead of frame number, slice number, you can select data based on retention time and drift times.
@@ -402,16 +440,56 @@ class TimspyDF(TimsData):
         Yields:
             pandas.DataFrame: Data frame with columns containing retention time, drift time, mass to charge ratio, and intensity of the required data.
         """
-        pass
+        if not isinstance(x, tuple):
+            rt = x
+            im = slice(None)
+        else:
+            assert len(x) == 2, "Pass in [min_retention_time:max_retention_time, min_drift_time:max_drift_time], or simply [min_retention_time:max_retention_time]"
+            rt, im = x
 
-    def phys(self, x):
+        assert isinstance(rt, slice) and isinstance(im, slice), "Retention Times and optional Drift Times must be passed in as ranges, e.g. A:B, A:, :B, :." 
+        
+        min_frame = self.min_frame if rt.start is None else self.rt2supFrame([rt.start])[0]
+        max_frame = (self.max_frame if rt.stop  is None else self.rt2infFrame([rt.stop])[0]) + 1
+        # +1 for Python selection mechanism
+
+        frames = range(min_frame, max_frame)
+        f, F = self.border_frames
+        print(frames)
+
+        s = max(self.min_scan if im.stop  is None else self.im2scan([im.stop])[0]+1, self.min_scan)
+        S = min(self.max_scan if im.start is None else self.im2scan([im.start])[0],  self.max_scan)
+        assert s <= S, "Lower ion mobility must be lower or equal to the higher ion mobility."
+
+        for frameNo in frames:
+            if f <= frameNo <= F:
+                frame = self.frame_array(frameNo,s,S)
+                if len(frame):
+                    if append:
+                        frame = pd.DataFrame(frame, columns=('frame', 'scan', 'tof', 'i'))
+                        frame['rt'] = self.frame2rt(frame.frame[0])[0]
+                        frame['im'] = self.scan2im_model(frame.scan)
+                        frame['mz'] = self.tof2mz_model(frame.tof)
+                        yield frame
+                    else:
+                        X = pd.DataFrame(index=pd.RangeIndex(0,len(frame)),
+                                         columns=('rt', 'im', 'mz', 'i'),
+                                         dtype=np.float64)
+                        X.rt = self.frame2rt([frame[0,0]])[0]
+                        # X.im = self.scan2im_model(frame[:,1])
+                        X.im = self.scan2im(frame[:,1])
+                        X.mz = self.tof2mz_model(frame[:,2])
+                        X.i  = frame[:,3]
+                        del frame
+                        yield X
+
+
+    def physical(self, x):
         dfs = list(self.iter_physical(x))
         if dfs:
             return pd.concat(dfs)
         else: 
-            return pd.DataFrame(columns=('frame', 'scan', 'tof', 'i'))
-
-    physical = phys
+            return pd.DataFrame(columns=('frame', 'scan', 'tof', 'i'), dtype=np.float64)
 
 
     #TODO: this can be done similarly to how VAEX does it.

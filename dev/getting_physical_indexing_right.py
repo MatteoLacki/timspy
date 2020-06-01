@@ -7,6 +7,7 @@ import pandas as pd
 from pathlib import Path
 
 from timspy.timspy import TimsDIA, TimspyDF
+from timspy.array_ops import which_min_geq, which_max_leq
 from timspy.plot import plot_spectrum
 from timsdata import TimsData
 
@@ -19,79 +20,75 @@ p = Path('/home/matteo/Projects/bruker/BrukerMIDIA/MIDIA_CE10_precursor/20190912
 # TD = TimsData(p) # timsdata does not support :
 D = TimspyDF(p) # timsdata does not support :
 # D = TimsDIA(p) # timsdata does not support :
-D.max_non_empty_scan
-D[100]
-F = D.frames
-F.index[F.MaxIntensity > 0][-1]
 
-D.min_max_frames
-
-
-
-
-X._info_repr()
-
-from pandas._config import get_option
-from pandas.io.formats import console
-from io import StringIO
-
-
-def repr(X):
-    """
-    Return a string representation for a particular DataFrame.
-    """
-    buf = StringIO("")
-    max_rows = get_option("display.max_rows")
-    min_rows = get_option("display.min_rows")
-    max_cols = get_option("display.max_columns")
-    max_colwidth = get_option("display.max_colwidth")
-    show_dimensions = get_option("display.show_dimensions")
-    if get_option("display.expand_frame_repr"):
-        width, _ = console.get_console_size()
-    else:
-        width = None
-    X.to_string(
-        buf=buf,
-        max_rows=max_rows,
-        min_rows=min_rows,
-        max_cols=max_cols,
-        line_width=width,
-        max_colwidth=max_colwidth,
-        show_dimensions=show_dimensions,
-    )
-    return buf.getvalue()
-
-repr(X)
-
-X.head(3)
-X.tail(3)
-
-(len(X.__repr__().split('\n')) - 2) // 2 - 1
-
-D.peak_count()
-X = D[1:100]
-
-
-
-
-D[D.min_frame]
-next(D.iter[:,:])
-
-it = D.iter_data_frames((slice(1,10),slice(None)))
-next(it)
-next(D.iter_data_frames(slice(None)))
-D.iter[""]
-
-list(D.iter[1:10,:])
-list(D.iter[1:10,0:900])
-
-for a in D.iter[1:10,0:900]:
-    print(a)
-
-next(D.iter_MS1())
-
+X = D[100]
 X['rt'] = D.frame2rt_model(X.frame)
 X['im'] = D.scan2im_model(X.scan)
 X['mz'] = D.tof2mz_model(X.tof)
 
+x = D.scan2im_model.x
+y = D.scan2im_model.y
 
+it = D.iter_physical(slice(1,6), append=True)
+next(it)
+D.frame2rt([6,7,8,9])
+D.frames.rt
+
+
+it = D.iter_physical((slice(1243.91,None), slice(None)), append=False)
+next(it)
+
+D.rt2frame([1243.91])
+D.rt2frame([1243.92])
+
+D.phys[1243.91:]
+
+D.min_frame
+D.max_frame
+D.frames.rt
+
+D.max_scan
+D.frames.rt[D.frames.rt>.9]
+D.frames.rt[D.frames.rt>5.797]
+D.phys[1:6]
+D.rt2infFrame(6)
+D.max_frame
+
+D[53]
+D.frame2rt(52)
+D.frames.rt[52]
+D.frames.rt[52]
+D.rt2infFrame([6])
+D[53]
+D.frames.rt[51:55]
+
+next(D.iter_physical(slice(5,6), append=True))
+D.frames.rt[D.frames.rt>5]
+
+D.frame2rt_model([47])
+D.frame2rt([42, 43, 44, 45])
+D.frames.rt[[42, 43, 44, 45]]
+D.frames.rt[[42, 43, 44, 45]]
+
+rt = D.frames.rt
+frames = D.frames.index
+rts = D.frames.rt.values
+
+frames[which_min_geq(rts, [0.35, .8])].values
+D.rt2supFrame([1,2])
+D.rt2infFrame([10])
+D.rt2infFrame([D.frames.rt[88:92][91]])
+
+
+D.frame2rt(X[:,0])
+X.dtypes
+
+D.scan2im_model((D.min_scan, D.max_scan))
+D.rt2frame(11135)
+
+D.scan2im_model.naive_inv(im)
+
+pd.RangeIndex(0, 100)
+Z = pd.DataFrame(index=np.arange(10), columns=('rt', 'im', 'mz', 'i'), dtype=np.float64)
+Z.rt = 
+D.tof2mz_model
