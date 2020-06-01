@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(  name='timspy',
         packages=find_packages(),
-        version='0.0.2',
+        version='0.0.3',
         description='TimsPy: access for raw timsTOF Pro data for data scientists',
         long_description='TimsPy facilitates access to the raw data gathered by timsTOF Pro mass spectrometer. Directly see data in the long format in the familiar numpy array of Pandas DataFrame object.',
         author='MatteoLacki',
