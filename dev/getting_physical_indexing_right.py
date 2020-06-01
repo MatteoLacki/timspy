@@ -52,3 +52,4 @@ D.plot_peak_counts()
 D.windows
 
 D.plot_windows("window_gr in [1,5,10]")
+next(D.iter['window_gr == 1'])
