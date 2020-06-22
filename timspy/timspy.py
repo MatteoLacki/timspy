@@ -461,6 +461,7 @@ class TimsPyDF(TimsData):
         assert isinstance(rt, slice) and isinstance(im, slice), "Retention Times and optional Drift Times must be passed in as ranges, e.g. A:B, A:, :B, :." 
         
         min_frame = self.min_frame if rt.start is None else self.rt2supFrame([rt.start])[0]
+        # print(rt.stop)
         max_frame = (self.max_frame if rt.stop  is None else self.rt2infFrame([rt.stop])[0]) + 1
         # +1 for Python selection mechanism
 
