@@ -26,13 +26,7 @@ plt.show()
 x = df.count(df.i, binby=[df.scan], shape=1000)
 
 df.plot1d(df.scan, what=vx.agg.nunique(df.scan))
-df.
-
-?vx.agg.nunique
-df.agg
-
 
 S = df.groupby(df.scan).agg({'i':'sum'})
 np.sort(S.scan.values)
-
 S = df.groupby(df.scan).agg({'i':'sum'})
