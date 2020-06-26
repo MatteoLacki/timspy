@@ -465,7 +465,6 @@ class TimsPyDF(TimsData):
         print(im)
         print(self.rt2supFrame([rt.start]))
         min_frame = self.min_frame if rt.start is None else self.rt2supFrame([rt.start])[0]
-        print(min_frame)
         max_frame = (self.max_frame if rt.stop  is None else self.rt2infFrame([rt.stop])[0]) + 1
         # +1 for Python selection mechanism
 
