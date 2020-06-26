@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
+
 from timspy.timspy import TimsDIA
 from timspy.plot import plot_spectrum
 from timsdata import TimsData
@@ -16,6 +17,7 @@ pd.set_option('display.max_columns', 500)
 
 # I have my data here
 p = Path('/home/matteo/Projects/bruker/BrukerMIDIA/MIDIA_CE10_precursor/20190912_HeLa_Bruker_TEN_MIDIA_200ng_CE10_100ms_Slot1-9_1_488.d')
+p = Path(r'X:\external\2019_2020_Bruker_Kooperation\BrukerMIDIA\data_sept_2019\MIDIA_CE10_precursor\20190912_HeLa_Bruker_TEN_MIDIA_200ng_CE10_25ms_Slot1-9_1_495.d')
 # TD = TimsData(p) # timsdata does not support :
 TD = TimsDIA(p) # timsdata does not support :
 
