@@ -586,7 +586,7 @@ class TimsPyDF(TimsData):
         max_frame = self.max_frame if max_frame is None else max_frame
         out_folder = Path(out_folder)
         out_folder.mkdir(parents=True, exist_ok=True)
-        types_remap = {'frame':'uint16', 'scan':'uint16', 'tof':'uint32', 'i':'uint32'}
+        types_remap = {'frame':'uint64', 'scan':'uint16', 'tof':'uint32', 'i':'uint32'}
         #TODO: types should be remaped earlier!
         for f, F in ranges(min_frame, max_frame+1, step):
             pd_df = self[f:F]
