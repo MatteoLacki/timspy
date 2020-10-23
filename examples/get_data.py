@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from pathlib import Path
-# import vaex as vx
+import vaex as vx
 
 from timspy.timspy import TimsDIA
 from timspy.plot import plot_spectrum
@@ -20,7 +20,7 @@ pd.set_option('display.max_columns', 500)
 
 # I have my data here
 p = Path('/home/matteo/Projects/bruker/BrukerMIDIA/MIDIA_CE10_precursor/20190912_HeLa_Bruker_TEN_MIDIA_200ng_CE10_100ms_Slot1-9_1_488.d')
-
+p.exists()
 # p can be a simple 'string' too
 D = TimsDIA(p)
 
@@ -152,15 +152,21 @@ MS2 = D.mzIdx2mz_model(S.mz_idx)
 D.plot_models()
 
 # making it all faster
-hdf5_files = [str(f) for f in p.glob('raw/*.hdf5')]
+hdf5 = Path("/mnt/samsung/bruker/testHDF5/prec_prec_100ms")
+hdf5_files = [str(f) for f in hdf5.glob('*.hdf5')]
+p = Path('/home/matteo/Projects/bruker/BrukerMIDIA/MIDIA_CE10_precursor/20190912_HeLa_Bruker_TEN_MIDIA_200ng_CE10_100ms_Slot1-9_1_488.d')
+D = TimsDIA(p)
 R = vx.open_many(hdf5_files)
 
 R['rt'] = D.frame2rt_model(R.frame)
 R['im'] = D.scan2im_model(R.scan)
-R['mz'] = D.mzIdx2mz_model(R.mz_idx)
-
+R['mz'] = D.tof2mz_model(R.tof)
 R.plot(R.mz, R.im, shape=(1000,919))
 plt.show()
+
+
+
+
 D.plot_models()
 
 frames = range(1,100)

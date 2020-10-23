@@ -163,39 +163,6 @@ print(next(it))
 # [12263 rows x 4 columns]
 ```
 
-### DIA experiments
-
-Data Independent Acquisition is a mode for performing the measurement in a consistent way, that assures a better, non-random coverage of the proteome.
-In particular, on timsTOF Pro the MS2 (fragmented) data is collected on windows.
-Want to see them? Don't use `TimsPyDF`, but a specialized subclass:
-```{python}
-p = '/path/to/brukers/folder/with/DIA/data.d')
-D = TimsDIA(p)
-D.plot_windows()
-```
-![](https://github.com/MatteoLacki/timspy/blob/devel/all_windows.png "DIA windows")
-Too many windows?
-
-```{python}
-D.plot_windows("window_gr in [1,5,10]")
-```
-![](https://github.com/MatteoLacki/timspy/blob/devel/windows_1_5_10.png "DIA windows 1, 5, and 10")
-
-Also, you might want to explore data in particular windows.
-This is also supported.
-```{python}
-it = D.iter['window_gr == 1']
-print(next(it))
-#       frame  scan     tof   i
-# 0         2    33   97298   9
-# 1         2    33  310524   9
-# ...     ...   ...     ...  ..
-# 6596      2   913   56442   9
-# 6597      2   915  172202   9
-# 
-# [6598 rows x 4 columns]
-```
-In fact, you can write queries involving any variables in tables `D.windows` and `D.frames`.
 
 ### Basic plotting
 You can plot the overview of your experiment.
