@@ -429,6 +429,8 @@ class TimsPyDF(TimsData):
         """Iterate over MS1 frames."""
         yield from self.iter['MsMsType == 9']
 
+    def __iter__(self):
+        yield from self.iter[self.min_frame:self.max_frame+1]
 
     @property
     def biggest_frame_number(self):
@@ -554,6 +556,7 @@ class TimsPyDF(TimsData):
             return pd.concat(dfs)
         else: 
             return pd.DataFrame(columns=('frame', 'scan', 'tof', 'i'), dtype=np.float64)
+
 
 
     #TODO: this can be done similarly to how VAEX does it.
