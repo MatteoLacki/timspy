@@ -12,6 +12,7 @@ def table2df(conn, name):
     """
     return pd.read_sql_query(f"SELECT * FROM {name}", conn)
 
+
 def head(conn, name, n=10):
     return pd.read_sql_query(f"SELECT * FROM {name} LIMIT {n};", conn)    
 
@@ -22,7 +23,8 @@ def list_tables(conn):
     Args:
         conn (sqlite3.Connection): Connection to the data base.
     Returns:
-        list: names of tables."""
+        list: names of tables.
+    """
     sql = "SELECT name FROM sqlite_master WHERE TYPE = 'table'"
     return [f[0] for f in conn.execute(sql)]
 
