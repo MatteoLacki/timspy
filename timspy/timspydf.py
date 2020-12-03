@@ -49,7 +49,7 @@ class TimsPyDF(OpenTIMS):
 
  
     def __repr__(self):
-        return f"TimsPyDF({self.peaks_cnt} peaks)"
+        return f"{self.__class__.__name__}({self.peaks_cnt} peaks)"
 
 
     def summary(self):
