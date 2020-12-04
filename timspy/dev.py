@@ -2,7 +2,7 @@
 %autoreload 2
 import pandas as pd
 pd.set_option('display.max_columns', None)
-pd.set_option('display.max_rows', 15)
+pd.set_option('display.max_rows', 5)
 import matplotlib.pyplot as plt
 import pathlib
 from collections import Counter
@@ -14,7 +14,20 @@ from timspy.vaex import TimsVaex
 
 path = pathlib.Path("/home/matteo/Projects/bruker/BrukerMIDIA/MIDIA_CE10_precursor/20190912_HeLa_Bruker_TEN_MIDIA_200ng_CE10_100ms_Slot1-9_1_488.d")
 D = TimsPyDIA(path)
+D.frames_meta()
+
+
+
+plt.plot(D.frames.MsMsType)
+plt.show()
+D.frames[D.frames.MsMsType != 0]
 D.windows
+len(Ids)
+len(D.windows)
+
+
+Counter(D.windows.WindowGroup)
+
 
 
 hdf_path = "/home/matteo/Projects/bruker/hdf5data/test_defaults.hdf5"
