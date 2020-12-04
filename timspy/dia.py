@@ -1,4 +1,4 @@
-from .timspydf import TimsPyDF
+from .df import TimsPyDF
 
 
 class TimsPyDIA(TimsPyDF):

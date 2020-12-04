@@ -21,7 +21,7 @@ setup(  name='timspy',
                           'opentimspy',
                           'matplotlib',
                           'opentims_bruker_bridge'],
-        # extras_require={
-        #     'plots': ('matplotlib >= 3.0.0'),
-        # },
+        extras_require={
+            'vaex': ['vaex-core', 'vaex-hdf5'],
+        },
 )

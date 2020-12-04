@@ -26,5 +26,7 @@ docs: clean_docs
 clean_docs:
 	rm -rf sphinx
 	rm -rf docs
-twine:
-	
+pypi_test:
+	twine upload --repository-url https://test.pypi.org/legacy/ dist/* 
+pypi:
+	twine upload dist/*

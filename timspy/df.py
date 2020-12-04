@@ -1,8 +1,9 @@
 import numpy as np
-import pathlib
 import pandas as pd
+import pathlib
 from opentimspy.opentims import OpenTIMS, all_columns
-import sqlite3
+
+from .sql import tables_names, table2df
 
 
 class TimsPyDF(OpenTIMS):
@@ -12,20 +13,15 @@ class TimsPyDF(OpenTIMS):
 
         Args:
             analysis_directory (str, unicode string): path to the folder containing 'analysis.tdf' and 'analysis.tdf_raw'.
-
         """
         super().__init__(analysis_directory)
         self.analysis_directory = pathlib.Path(analysis_directory)
+        self.frames = self.table2df("frames").sort_values('Id')
         self.frames_no = self.max_frame-self.min_frame+1
         self._ms1_mask = np.zeros(self.frames_no,
                                   dtype=bool)
         self._ms1_mask[self.ms1_frames-1] = True
-        self.frames = self.table2df("frames")
-
-
-    def _sql2df(self, query):
-        with sqlite3.connect(self.analysis_directory/'analysis.tdf') as conn:
-            return pd.read_sql_query(query, conn)
+        self.rt = self.frames.Time.values
 
 
     def tables_names(self):
@@ -34,7 +30,7 @@ class TimsPyDF(OpenTIMS):
         Returns:
             pd.DataTable: table with names of tables one can get with 'table2df'.
         """
-        return self._sql2df("SELECT name FROM sqlite_master WHERE TYPE = 'table'")
+        return tables_names(self.analysis_directory/'analysis.tdf')
 
 
     def table2df(self, name):
@@ -45,7 +41,7 @@ class TimsPyDF(OpenTIMS):
         Returns:
             pd.DataFrame: required data frame.
         """
-        return self._sql2df(f"SELECT * FROM {name}")
+        return table2df(self.analysis_directory/'analysis.tdf', name)
 
  
     def __repr__(self):
@@ -82,16 +78,27 @@ class TimsPyDF(OpenTIMS):
         """
         import matplotlib.pyplot as plt
         MS1 = self._ms1_mask
-        RT = self.frames.Time
         NP = self.frames.NumPeaks
-        plt.plot(RT[ MS1], NP[ MS1], label="MS1")
-        plt.plot(RT[~MS1], NP[~MS1], label="MS2")
+        plt.plot(self.rt[ MS1], NP[ MS1], label="MS1")
+        plt.plot(self.rt[~MS1], NP[~MS1], label="MS2")
         plt.legend()
         plt.xlabel("Retention Time")
         plt.ylabel("Number of Peaks")
         plt.title("Peak Counts per Frame")
         if show:
             plt.show()
+
+
+    def intensity_per_frame(self, recalibrated=True):
+        """Get sum of intensity per each frame (dt).
+
+        Arguments:
+            recalibrated (bool): Use Bruker recalibrated total intensities or calculate them from scratch with OpenTIMS?
+        
+        Returns:
+            np.array: sums of intensities per frame. 
+        """
+        return self.frames.SummedIntensities if recalibrated else self.framesTIC()
 
 
     def plot_TIC(self, recalibrated=True, show=True):
@@ -103,10 +110,9 @@ class TimsPyDF(OpenTIMS):
         """
         import matplotlib.pyplot as plt
         MS1 = self._ms1_mask
-        RT = self.frames.Time
-        I = self.frames.SummedIntensities if recalibrated else self.framesTIC()
-        plt.plot(RT[ MS1], I[ MS1], label="MS1")
-        plt.plot(RT[~MS1], I[~MS1], label="MS2")
+        I = self.intensity_per_frame(recalibrated)
+        plt.plot(self.rt[ MS1], I[ MS1], label="MS1")
+        plt.plot(self.rt[~MS1], I[~MS1], label="MS2")
         plt.legend()
         plt.xlabel("Retention Time")
         plt.ylabel("Intensity")
