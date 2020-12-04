@@ -1,0 +1,7 @@
+timspy
+======
+
+.. toctree::
+   :maxdepth: 4
+
+   timspy

@@ -1,0 +1,53 @@
+timspy package
+==============
+
+Submodules
+----------
+
+timspy.df module
+----------------
+
+.. automodule:: timspy.df
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+timspy.dia module
+-----------------
+
+.. automodule:: timspy.dia
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+timspy.plot module
+------------------
+
+.. automodule:: timspy.plot
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+timspy.sql module
+-----------------
+
+.. automodule:: timspy.sql
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+timspy.vaex module
+------------------
+
+.. automodule:: timspy.vaex
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: timspy
+   :members:
+   :undoc-members:
+   :show-inheritance:
