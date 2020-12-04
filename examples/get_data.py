@@ -177,3 +177,7 @@ pprint(D[1:10])
 
 
 D.plot_TIC()
+
+D.plot_peak_counts()
+
+D.plot_intensity_given_mz_inv_ion_mobility()

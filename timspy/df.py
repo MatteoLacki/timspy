@@ -125,16 +125,16 @@ class TimsPyDF(OpenTIMS):
                                             frames=None,
                                             mz_bin_borders=np.linspace(500, 2500, 1001),
                                             inv_ion_mobility_bin_borders=np.linspace(0.8, 1.7, 101)):
-        """Sum intensity over m/z-drift time rectangles.
+        """Sum intensity over m/z-inverse ion mobility rectangles.
 
         Typically it does not make too much sense to mix MS1 intensities with the others here.
 
         Arguments:
             frames (iterable): Frames to consider. Defaults to all ms1_frames. 
             mz_bin_borders (np.array): Positions of bin borders for mass over charge ratios.
-            inv_ion_mobility_bin_borders (np.array): Positions of bin borders for drift times.
+            inv_ion_mobility_bin_borders (np.array): Positions of bin borders for inverse ion mobilities.
         Returns:
-            tuple: np.array with intensities, the positions of bin borders for mass over charge ratios and drift times.
+            tuple: np.array with intensities, the positions of bin borders for mass over charge ratios and inverse ion mobilities.
         """
         if frames is None:
             frames = self.ms1_frames
@@ -161,7 +161,7 @@ class TimsPyDF(OpenTIMS):
                                    imshow_kwds={'interpolation':'nearest',
                                                 'aspect':'auto'},
                                    **kwds):
-        """Sum intensity over m/z-drift time rectangles.
+        """Sum intensity over m/z-inverse ion mobility rectangles.
 
         Plot a transformation of the sum of intensities.
         Usually, plotting the square root of summed intensities looks best.
@@ -180,7 +180,7 @@ class TimsPyDF(OpenTIMS):
                            inv_ion_mobility_bin_borders[0], inv_ion_mobility_bin_borders[-1]],
                    **imshow_kwds)
         plt.xlabel("Mass / Charge")
-        plt.ylabel("Drift Time")
+        plt.ylabel("Inverse Ion Mobility")
         plt.title("Total Intensity")
         if show:
             plt.show()

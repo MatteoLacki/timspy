@@ -204,6 +204,16 @@ D.plot_TIC()
 ```
 ![](https://github.com/MatteoLacki/timspy/blob/master/ms1ms2intensity.png "TIC per frame")
 
+```python
+D.plot_peak_counts()
+```
+![](https://github.com/MatteoLacki/timspy/blob/master/ms1ms2peak_counts.png "TIC per frame")
+
+```python
+D.plot_intensity_given_mz_inv_ion_mobility()
+```
+![](https://github.com/MatteoLacki/timspy/blob/master/ms1_heatmap.png "TIC per frame")
+
 
 ### Plans
 * specialized methods for DDA experiments
