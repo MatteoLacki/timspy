@@ -1,22 +1,20 @@
 # TimsPy
 
-A data science friendly data access to timsTOF Pro mass spectrometry data.
+`TimsPy` offers a data science friendly data access to timsTOF Pro mass spectrometry data from Python.
+It is built on top of [OpenTIMS](https://github.com/michalsta/opentims).
 
 ### Requirements
 
-TimsPy works well on Linux.
-On Windows, it works with Python <= 3.7.3 due to changes in the distribution policy of the dlls by cpython.
-This is currently being patched.
-MacOS ain't supported.
+TimsPy works on all operating systes, with the similar constraints as [OpenTIMS](https://github.com/michalsta/opentims).
 
-### What gives?
+
+### What you get?
 
 Simple way to get data out of results collected with your Bruker timsTOF Pro from Python.
-This definitely ain't no rocket science, but is pretty useful!
+Definitely ain't no rocket science, but is pretty useful.
 
 For example:
-
-```{python}
+```python
 from timspy.timspy import TimspyDF
 
 p = '/path/to/brukers/folder/with/data.d')

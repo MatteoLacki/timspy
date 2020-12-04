@@ -18,11 +18,10 @@ docs: clean_docs
 	mkdir -p sphinx
 	mkdir -p docs || True
 	touch docs/.nojekyll
-	sphinx-quickstart sphinx --sep --project OpenTIMS --author Lacki_and_Startek -v 0.0.1 --ext-autodoc --ext-githubpages --extensions sphinx.ext.napoleon --extensions recommonmark --makefile -q --no-batchfile
-	sphinx-apidoc -f -o sphinx/source opentimspy
+	sphinx-quickstart sphinx --sep --project TimsPy --author Lacki_and_Startek -v 0.0.1 --ext-autodoc --ext-githubpages --extensions sphinx.ext.napoleon --extensions recommonmark --makefile -q --no-batchfile
+	sphinx-apidoc -f -o sphinx/source timspy
 	cd sphinx && make html
 	cp -r sphinx/build/html/* docs
-	git checkout master
 clean_docs:
 	rm -rf sphinx
 	rm -rf docs
