@@ -34,7 +34,7 @@ class TimsVaex(object):
         self.frames_no = self.max_frame-self.min_frame+1
         self._ms1_mask = self.frames.MsMsType.values == 0
         self.ms1_frames = self.frames.Id[self._ms1_mask].values
-        self.rt = self.frames.Time
+        self.retention_time = self.frames.Time
 
 
     def tables_names(self):
@@ -92,8 +92,8 @@ class TimsVaex(object):
         import matplotlib.pyplot as plt
         MS1 = self._ms1_mask
         I = self.intensity_per_frame(recalibrated)
-        plt.plot(self.rt[ MS1], I[ MS1], label="MS1")
-        plt.plot(self.rt[~MS1], I[~MS1], label="MS2")
+        plt.plot(self.retention_time[ MS1], I[ MS1], label="MS1")
+        plt.plot(self.retention_time[~MS1], I[~MS1], label="MS2")
         plt.legend()
         plt.xlabel("Retention Time")
         plt.ylabel("Intensity")
@@ -101,10 +101,10 @@ class TimsVaex(object):
         if show:
             plt.show()
 
-    def intensity_given_mz_dt(self,
-                              frames=None,
-                              mz_bin_borders=np.linspace(500, 2500, 1001),
-                              dt_bin_borders=np.linspace(0.8, 1.7, 101)):
+    def intensity_given_mz_inv_ion_mobility(self,
+                                            frames=None,
+                                            mz_bin_borders=np.linspace(500, 2500, 1001),
+                                            inv_ion_mobility_bin_borders=np.linspace(0.8, 1.7, 101)):
         if frames is None:
             frames = self.ms1_frames
 

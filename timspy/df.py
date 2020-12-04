@@ -15,13 +15,12 @@ class TimsPyDF(OpenTIMS):
             analysis_directory (str, unicode string): path to the folder containing 'analysis.tdf' and 'analysis.tdf_raw'.
         """
         super().__init__(analysis_directory)
-        self.analysis_directory = pathlib.Path(analysis_directory)
         self.frames = self.table2df("frames").sort_values('Id')
         self.frames_no = self.max_frame-self.min_frame+1
         self._ms1_mask = np.zeros(self.frames_no,
                                   dtype=bool)
         self._ms1_mask[self.ms1_frames-1] = True
-        self.rt = self.frames.Time.values
+        self.retention_time = self.frames.Time.values
 
 
     def tables_names(self):
@@ -79,8 +78,8 @@ class TimsPyDF(OpenTIMS):
         import matplotlib.pyplot as plt
         MS1 = self._ms1_mask
         NP = self.frames.NumPeaks
-        plt.plot(self.rt[ MS1], NP[ MS1], label="MS1")
-        plt.plot(self.rt[~MS1], NP[~MS1], label="MS2")
+        plt.plot(self.retention_time[ MS1], NP[ MS1], label="MS1")
+        plt.plot(self.retention_time[~MS1], NP[~MS1], label="MS2")
         plt.legend()
         plt.xlabel("Retention Time")
         plt.ylabel("Number of Peaks")
@@ -90,7 +89,7 @@ class TimsPyDF(OpenTIMS):
 
 
     def intensity_per_frame(self, recalibrated=True):
-        """Get sum of intensity per each frame (dt).
+        """Get sum of intensity per each frame (retention time).
 
         Arguments:
             recalibrated (bool): Use Bruker recalibrated total intensities or calculate them from scratch with OpenTIMS?
@@ -98,7 +97,7 @@ class TimsPyDF(OpenTIMS):
         Returns:
             np.array: sums of intensities per frame. 
         """
-        return self.frames.SummedIntensities if recalibrated else self.framesTIC()
+        return self.frames.SummedIntensities.values if recalibrated else self.framesTIC()
 
 
     def plot_TIC(self, recalibrated=True, show=True):
@@ -111,8 +110,8 @@ class TimsPyDF(OpenTIMS):
         import matplotlib.pyplot as plt
         MS1 = self._ms1_mask
         I = self.intensity_per_frame(recalibrated)
-        plt.plot(self.rt[ MS1], I[ MS1], label="MS1")
-        plt.plot(self.rt[~MS1], I[~MS1], label="MS2")
+        plt.plot(self.retention_time[ MS1], I[ MS1], label="MS1")
+        plt.plot(self.retention_time[~MS1], I[~MS1], label="MS2")
         plt.legend()
         plt.xlabel("Retention Time")
         plt.ylabel("Intensity")
@@ -122,10 +121,10 @@ class TimsPyDF(OpenTIMS):
 
 
     #TODO: this should be reimplemented later on in C++, single core...
-    def intensity_given_mz_dt(self,
-                              frames=None,
-                              mz_bin_borders=np.linspace(500, 2500, 1001),
-                              dt_bin_borders=np.linspace(0.8, 1.7, 101)):
+    def intensity_given_mz_inv_ion_mobility(self,
+                                            frames=None,
+                                            mz_bin_borders=np.linspace(500, 2500, 1001),
+                                            inv_ion_mobility_bin_borders=np.linspace(0.8, 1.7, 101)):
         """Sum intensity over m/z-drift time rectangles.
 
         Typically it does not make too much sense to mix MS1 intensities with the others here.
@@ -133,7 +132,7 @@ class TimsPyDF(OpenTIMS):
         Arguments:
             frames (iterable): Frames to consider. Defaults to all ms1_frames. 
             mz_bin_borders (np.array): Positions of bin borders for mass over charge ratios.
-            dt_bin_borders (np.array): Positions of bin borders for drift times.
+            inv_ion_mobility_bin_borders (np.array): Positions of bin borders for drift times.
         Returns:
             tuple: np.array with intensities, the positions of bin borders for mass over charge ratios and drift times.
         """
@@ -141,22 +140,22 @@ class TimsPyDF(OpenTIMS):
             frames = self.ms1_frames
 
         I = np.zeros(shape=(len(mz_bin_borders)-1,
-                            len(dt_bin_borders)-1),
+                            len(inv_ion_mobility_bin_borders)-1),
                      dtype=float)
         # float because numpy does not have histogram2d with ints 
 
         for X in self.query_iter(frames=frames,
-                                 columns=('mz','dt','intensity')):
-            I_fr, _,_ = np.histogram2d(X.mz, X.dt,
+                                 columns=('mz','inv_ion_mobility','intensity')):
+            I_fr, _,_ = np.histogram2d(X.mz, X.inv_ion_mobility,
                                        bins=[mz_bin_borders,
-                                             dt_bin_borders], 
+                                             inv_ion_mobility_bin_borders], 
                                        weights=X.intensity)
             I += I_fr
 
-        return I, mz_bin_borders, dt_bin_borders
+        return I, mz_bin_borders, inv_ion_mobility_bin_borders
 
 
-    def plot_intensity_given_mz_dt(self, 
+    def plot_intensity_given_mz_inv_ion_mobility(self, 
                                    intensity_transformation=np.sqrt,
                                    show=True,
                                    imshow_kwds={'interpolation':'nearest',
@@ -171,14 +170,14 @@ class TimsPyDF(OpenTIMS):
         Arguments:
             intensity_transformation (np.ufunc): Function that transforms intensities. Default to square root.
             show (bool): Show the plot immediately, or just add it to the canvas?
-            **kwds: Keyword arguments for the 'intensity_given_mz_dt' method.
+            **kwds: Keyword arguments for the 'intensity_given_mz_inv_ion_mobility' method.
         """
         import matplotlib.pyplot as plt
         
-        I, mz_bin_borders, dt_bin_borders = self.intensity_given_mz_dt(**kwds)
+        I, mz_bin_borders, inv_ion_mobility_bin_borders = self.intensity_given_mz_inv_ion_mobility(**kwds)
         plt.imshow(intensity_transformation(I),
                    extent=[mz_bin_borders[0], mz_bin_borders[-1],
-                           dt_bin_borders[0], dt_bin_borders[-1]],
+                           inv_ion_mobility_bin_borders[0], inv_ion_mobility_bin_borders[-1]],
                    **imshow_kwds)
         plt.xlabel("Mass / Charge")
         plt.ylabel("Drift Time")
