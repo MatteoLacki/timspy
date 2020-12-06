@@ -4,10 +4,40 @@ A data science friendly data access to timsTOF Pro mass spectrometry data.
 
 ### Requirements
 
-TimsPy works well on Linux.
-On Windows, it works with Python <= 3.7.3 due to changes in the distribution policy of the dlls by cpython.
-This is currently being patched.
-MacOS ain't supported.
+In general, the software should work on Linux, Windows, or MacOS.
+Python3.6 or higher versions are tested.
+
+On Windows, install Microsoft Visual Studio from [here](https://visualstudio.microsoft.com/visual-cpp-build-tools/) to make use of C++ or Python code.
+On Linux, have clang++ or g++ installed (clang is better).
+On macOS, [install x-tools command line tools](https://www.godo.dev/tutorials/xcode-command-line-tools-installation-faq/).
+
+
+## Python
+ 
+From terminal (assuming you have python and pip included in the system PATH) write
+```bash
+pip install timspy
+```
+For a direct installation from github:
+```bash
+pip install git+https://github.com/michalsta/opentims
+```
+
+**On Windows**: we have noticed issues with the numpy==1.19.4 due to changes in Intel's fmod function, unrelated to our work. 
+If you keep on experiencing these issues, install numpy==1.19.3.
+```bash
+pip uninstall numpy
+pip install numpy==1.19.3
+```
+
+For version supporting `vaex` and `HDF5`, write:
+```bash
+pip install timspy[vaex]
+```
+or simply add in the missing modules to the existing installation:
+```bash
+pip install vaex-core vaex-hdf5 h5py
+```
 
 ### What can you expect?
 
