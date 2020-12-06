@@ -20,8 +20,14 @@ setup(  name='timspy',
         install_requires=['pandas',
                           'opentimspy',
                           'matplotlib',
-                          'opentims_bruker_bridge'],
+                          'opentims_bruker_bridge',
+                          'tqdm'],
         extras_require={
-            'vaex': ['vaex-core', 'vaex-hdf5'],
+            'vaex': ['vaex-core',
+                     'vaex-hdf5',
+                     'h5py'],
         },
+        scripts = [
+            'bin/tims2hdf5.py'
+        ]
 )

@@ -1,9 +1,14 @@
 import numpy as np
 import pandas as pd
 import pathlib
-from opentimspy.opentims import OpenTIMS, all_columns
+import tqdm
+
+from opentimspy.opentims import OpenTIMS, all_columns, all_columns_dtype
 
 from .sql import tables_names, table2df
+
+
+column2dtype = dict(zip(all_columns, all_columns_dtype))
 
 
 class TimsPyDF(OpenTIMS):
@@ -184,3 +189,62 @@ class TimsPyDF(OpenTIMS):
         plt.title("Total Intensity")
         if show:
             plt.show()
+
+
+    def to_hdf(self,
+               target_path,
+               columns=all_columns,
+               compression='gzip',
+               compression_level=9,
+               shuffle=True,
+               chunks=True,
+               silent=True,
+               **kwds):
+        """Convert the data set to HDF5 compatible with 'vaex'.
+
+        Most of the arguments are documented on the h5py website.
+
+        Arguments:
+            target_path (str): Where to write the file (folder will be automatically created). Cannot point to an already existing file.
+            columns (tuple): Names of columns to export to HDF5.
+            compression (str): Compression strategy.
+            compression_level (str): Parameters for compression filter.
+            shuffle (bool): Enable shuffle filter.
+            chunks (int): Chunk shape, or True to enable auto-chunking.
+            silent (bool): Skip progress bar
+        """
+        import h5py
+
+        target_path = pathlib.Path(target_path)
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with h5py.File(target_path, "w") as hdf_conn:
+            out_grp = hdf_conn.create_group("data")
+
+            datasets = {}
+            for colname in columns:
+                datasets[colname] = out_grp.create_dataset(
+                    name=colname,
+                    shape=(len(self),),
+                    compression=compression,
+                    compression_opts=compression_level if compression=='gzip' else None,
+                    dtype=column2dtype[colname],
+                    chunks=chunks,
+                    shuffle=shuffle,
+                    **kwds)
+
+            frame_ids = range(self.min_frame, self.max_frame)
+            if not silent:
+                frame_ids = tqdm.tqdm(frame_ids)
+
+            data_offset = 0
+            for frame_id in frame_ids:
+                # super for compatibility with Michal's code...
+                frame = super().query(frame_id, columns=columns)
+                frame_size = len(next(frame.values().__iter__()))
+                for colname, dataset in datasets.items():
+                    dataset.write_direct(frame[colname], dest_sel=np.s_[data_offset:data_offset+frame_size])
+                data_offset += frame_size
+
+        if not silent:
+            print(f"Finished with {target_path}")
