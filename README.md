@@ -214,10 +214,18 @@ D.plot_intensity_given_mz_inv_ion_mobility()
 ```
 ![](https://github.com/MatteoLacki/timspy/blob/master/ms1_heatmap.png "TIC per frame")
 
+### Vaex support
+
+`TimsPy` offers support for a HDF5 based format that can be used with vaex.
+
+
+
+
 
 ### Plans
 * specialized methods for DDA experiments
-* going fully open-source
+* going fully open-source with scan2inv_ion_mobility and tof2mz
+* reduction of size of the HDF5 files
 
 ### Installation
 
