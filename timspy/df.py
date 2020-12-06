@@ -233,7 +233,7 @@ class TimsPyDF(OpenTIMS):
                     shuffle=shuffle,
                     **kwds)
 
-            frame_ids = range(self.min_frame, self.max_frame)
+            frame_ids = range(self.min_frame, self.max_frame+1)
             if not silent:
                 frame_ids = tqdm.tqdm(frame_ids)
 
