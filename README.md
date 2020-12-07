@@ -11,8 +11,6 @@ On Windows, install Microsoft Visual Studio from [here](https://visualstudio.mic
 On Linux, have clang++ or g++ installed (clang is better).
 On macOS, [install x-tools command line tools](https://www.godo.dev/tutorials/xcode-command-line-tools-installation-faq/).
 
-
-## Python
  
 From terminal (assuming you have python and pip included in the system PATH) write
 ```bash
@@ -214,6 +212,31 @@ pprint(next(it))
 # [7359 rows x 7 columns]
 
 
+# The frame lasts a convenient time unit that well suits chromatography peak elution.
+# What if you were interested instead in finding out which frames eluted in a given time 
+# time of the experiment?
+# For this reasone, we have prepared a retention time based query:
+# suppose you are interested in all frames corresponding to all that eluted between 10 and 12
+# minute of the experiment.
+# Well, here goes nothing:
+D.rt_query(10,12)
+#         frame  scan     tof  ...           mz  inv_ion_mobility  retention_time
+# 0          92    33  361758  ...  1456.283499          1.601142       10.086899
+# 1          92    36   65738  ...   222.282248          1.597716       10.086899
+# 2          92    41  308330  ...  1153.590878          1.592008       10.086899
+# 3          92    43  123618  ...   378.518961          1.589725       10.086899
+# 4          92    48   65346  ...   221.365052          1.584017       10.086899
+# ...       ...   ...     ...  ...          ...               ...             ...
+# 128129    109   914  138760  ...   426.214230          0.604139       11.910014
+# 128130    109   914  142129  ...   437.210911          0.604139       11.910014
+# 128131    109   914  144566  ...   445.252770          0.604139       11.910014
+# 128132    109   916  138933  ...   426.775504          0.601896       11.910014
+# 128133    109   917  373182  ...  1525.576529          0.600774       11.910014
+
+# [128134 rows x 7 columns]
+
+
+
 # Get numpy array with raw data in a given range 1:10
 pprint(D[1:10])
 # array([[     1,     33, 312260,      9],
@@ -223,6 +246,49 @@ pprint(D[1:10])
 #        [     9,    913, 204042,     10],
 #        [     9,    914, 358144,      9],
 #        [     9,    915, 354086,      9]], dtype=uint32)
+
+
+# Simple access to 'analysis.tdf'? Sure:
+D.tables_names()
+#                         name
+# 0             GlobalMetadata
+# 1        PropertyDefinitions
+# 2             PropertyGroups
+# 3            GroupProperties
+# 4            FrameProperties
+# 5              FrameMsMsInfo
+# 6            CalibrationInfo
+# 7                     Frames
+# 8                   Segments
+# 9                   ErrorLog
+# 10             MzCalibration
+# 11           TimsCalibration
+# 12  DiaFrameMsMsWindowGroups
+# 13       DiaFrameMsMsWindows
+# 14          DiaFrameMsMsInfo
+
+# Just choose a table now:
+D.table2df('TimsCalibration')
+#    Id  ModelType  C0   C1          C2         C3    C4  C5        C6          C7         C8           C9
+# 0   1          2   1  917  213.599846  75.817289  33.0   1 -0.009066  135.436364  13.326079  1663.341457
+# and there will be pandas all the way down. 
+
+# Also, one table (Frames) is so important, that you can get it immediately: 
+D.frames
+#           Id         Time Polarity  ScanMode  ...  TimsCalibration  PropertyGroup  AccumulationTime  RampTime
+# 0          1     0.326492        +         9  ...                1              1            99.953    99.953
+# 1          2     0.434706        +         9  ...                1              1            99.953    99.953
+# 2          3     0.540987        +         9  ...                1              1            99.953    99.953
+# 3          4     0.648887        +         9  ...                1              1            99.953    99.953
+# 4          5     0.756660        +         9  ...                1              1            99.953    99.953
+# ...      ...          ...      ...       ...  ...              ...            ...               ...       ...
+# 11548  11549  1243.494142        +         9  ...                1              1            99.953    99.953
+# 11549  11550  1243.599171        +         9  ...                1              1            99.953    99.953
+# 11550  11551  1243.707291        +         9  ...                1              1            99.953    99.953
+# 11551  11552  1243.811222        +         9  ...                1              1            99.953    99.953
+# 11552  11553  1243.919337        +         9  ...                1              1            99.953    99.953
+
+# [11553 rows x 17 columns]
 ```
 
 ### Basic plotting
@@ -244,12 +310,138 @@ D.plot_intensity_given_mz_inv_ion_mobility()
 ```
 ![](https://github.com/MatteoLacki/timspy/blob/master/ms1_heatmap.png "TIC per frame")
 
+### DIA data
+
+To get meaningful information out of the DIA experiments, you have to combine data from both `analysis.tdf_raw` and `analysis.tdf`.
+With `TimsPy` that is simple:
+
+```python
+"""
+We made a class to simplify access to DIA data.
+Its parent class is TimsPyDF, so you can use all of its methods.
+"""
+from timspy.dia import TimsPyDIA
+
+
+
+path = 'path/to/your/data.d'
+D = TimsPyDF(path) # get data handle
+
+# Interested in Windows?
+D.windows
+#      WindowGroup  ScanNumBegin  ScanNumEnd  ...  CollisionEnergy      mz_left     mz_right
+# 0              1             0          36  ...             10.0  1265.384615  1301.384615
+# 1              1            37          73  ...             10.0  1220.512821  1256.512821
+# 2              1            74         110  ...             10.0  1175.641026  1211.641026
+# 3              1           111         146  ...             10.0  1130.769231  1166.769231
+# 4              1           147         183  ...             10.0  1085.897436  1121.897436
+# ..           ...           ...         ...  ...              ...          ...          ...
+# 520           21           735         771  ...             10.0   607.948718   643.948718
+# 521           21           772         807  ...             10.0   563.076923   599.076923
+# 522           21           808         844  ...             10.0   518.205128   554.205128
+# 523           21           845         881  ...             10.0   473.333333   509.333333
+# 524           21           882         918  ...             10.0   428.461538   464.461538
+
+# [525 rows x 8 columns]
+
+
+
+# Interested which frame collects data from which window group?
+D.frames_meta()
+#           Id         Time Polarity  ScanMode  ...  IsolationWidth  CollisionEnergy      mz_left     mz_right
+# 0          1     0.326492        +         9  ...             NaN              NaN          NaN          NaN
+# 1          2     0.434706        +         9  ...            36.0             10.0  1265.384615  1301.384615
+# 2          3     0.540987        +         9  ...            36.0             10.0  1220.512821  1256.512821
+# 3          4     0.648887        +         9  ...            36.0             10.0  1175.641026  1211.641026
+# 4          5     0.756660        +         9  ...            36.0             10.0  1130.769231  1166.769231
+# ...      ...          ...      ...       ...  ...             ...              ...          ...          ...
+# 11548  11549  1243.494142        +         9  ...            36.0             10.0  1460.512821  1496.512821
+# 11549  11550  1243.599171        +         9  ...            36.0             10.0  1415.641026  1451.641026
+# 11550  11551  1243.707291        +         9  ...            36.0             10.0  1370.769231  1406.769231
+# 11551  11552  1243.811222        +         9  ...            36.0             10.0  1325.897436  1361.897436
+# 11552  11553  1243.919337        +         9  ...            36.0             10.0  1281.025641  1317.025641
+
+# [11553 rows x 26 columns]
+# This function joins the proper tables for you, so you don't have to.
+# That how good that function is.
+```
+
+
 ### Vaex support
 
 `TimsPy` offers support for a HDF5 based format that can be used with vaex.
 
+```python
+""" 
+Here we show how to export data to veax-compatible format using API and how to read it in.
+
+"""
+from timspy.df import TimsPyDF
+from timspy.vaex import TimsVaex
+
+path = "/path/to/your/data.d"
+
+D = TimsPyDF(path)
+D.to_vaex("/path/to/where/to/save/data.hdf")
+# above you can pass all other paramaters that are used by
+# create_dataset function in h5py, as shown here:
+# https://docs.h5py.org/_/downloads/en/2.6.0/pdf/
+
+# Saving can take a while depending on the chosen algorithm.
+
+V = TimsVaex("/path/to/where/to/save/data.hdf",
+             "/path/to/your/data.d/analysis.tdf")# need sqlite
+
+print(V)
+TimsVaex.df
+# #            frame    intensity    inv_ion_mobility    mz                  retention_time     scan    tof
+# 0            1        9            1.6011418333261218  1174.6557905901582  0.326492080509831  33      312260
+# 1            1        9            1.5999999999999996  733.4809407066116   0.326492080509831  34      220720
+# 2            1        9            1.5999999999999996  916.952388791982    0.326492080509831  34      261438
+# 3            1        9            1.5977164032508784  152.3556513940331   0.326492080509831  36      33072
+# 4            1        9            1.5977164032508784  827.3114212681397   0.326492080509831  36      242110
+# ...          ...      ...          ...                 ...                 ...                ...     ...
+# 404,183,872  11553    9            0.6097471205799778  1171.1371127745708  1243.91933656337   909     311606
+# 404,183,873  11553    9            0.6086254290341188  677.899262990993    1243.91933656337   910     207399
+# 404,183,874  11553    9            0.6075037601757217  1084.4095190266144  1243.91933656337   911     295164
+# 404,183,875  11553    9            0.6030173116029844  262.0435011990699   1243.91933656337   915     82016
+# 404,183,876  11553    9            0.6018957561715719  1129.4302518267864  1243.91933656337   916     303778
 
 
+# Then you can plot TIC 
+V.plot_TIC(recalibrated=False)
+```
+
+To get a better understanding of what `vaex` can do, we refer you to (its manual)[https://vaex.readthedocs.io/en/latest/tutorial.html]. 
+Below, let us show you how to use it to calculate the sum of observed intensities per scan.
+
+```python
+import vaex
+import matplotlib.pyplot as plt
+
+I_per_scan = V.df.groupby(by='scan',
+                          agg={'SummedIntenisty': vaex.agg.sum('intensity')})
+
+# Then you can take the output, which is small and RAM-friendly,
+# and do whatever you want with it :)
+I_per_scan = I_per_scan.to_pandas_df().sort_values('scan')
+#      scan  SummedIntenisty
+# 629    33          2966589
+# 630    34          2822660
+# 631    35          2670091
+# 868    36          2542816
+# 632    37          2445243
+# ..    ...              ...
+# 624   913           372112
+# 625   914           359317
+# 626   915           365467
+# 627   916           347171
+# 628   917           347208
+
+# [885 rows x 2 columns]
+```
+The calculation is done on multiple threads.
+Each thread gets its portion of the data automatically.
 
 
 ### Plans
