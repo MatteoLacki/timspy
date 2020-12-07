@@ -370,6 +370,40 @@ D.frames_meta()
 ### Vaex support
 
 `TimsPy` offers support for a HDF5 based format that can be used with vaex.
+You can prepare the `hdf` file either directly from the terminal, or using the API.
+The command-line script is documented:
+```bash
+tims2hdf5.py --help
+```
+on Linux or macOS and 
+```powershell
+python tims2hdf5.py --help
+```
+on Windows results in 
+```bash
+usage: tims2hdf5.py [-h] [--compression {gzip,lzf,szip,none}] [--compression_level COMPRESSION_LEVEL] [--chunksNo CHUNKSNO] [--shuffle]
+                    [--columns {frame,scan,tof,intensity,mz,inv_ion_mobility,retention_time} [{frame,scan,tof,intensity,mz,inv_ion_mobility,retention_time} ...]] [--silent]
+                    source target
+
+Convert timsTOF Pro TDF into HDF5 with another set of parameters.
+
+positional arguments:
+  source                Path to the input .d folder containing TIMS data ("analysis.tdf" and "analysis.tdf_raw").
+  target                Path to the output HDF5 file.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --compression {gzip,lzf,szip,none}
+                        Compression algorithm. (default: gzip)
+  --compression_level COMPRESSION_LEVEL
+                        Compression level, valid only for gzip compression. (default: 4)
+  --chunksNo CHUNKSNO   Number of chunks. 0 for auto. (default: 0)
+  --shuffle             Perform byte shuffling to help compression. (default: False)
+  --columns {frame,scan,tof,intensity,mz,inv_ion_mobility,retention_time} [{frame,scan,tof,intensity,mz,inv_ion_mobility,retention_time} ...]
+                        A list of columns to be included in the output HDF5 file. (default: frame scan tof intensity)
+  --silent              Do not display progress bar. (default: False)
+```
+And the API can be used this way:
 
 ```python
 """ 
