@@ -1,5 +1,3 @@
-from pprint import pprint
-
 from timspy.df import TimsPyDF
 
 
@@ -31,7 +29,7 @@ print(all_columns)
 
 
 # Get a dict with data from frames 1, 5, and 67.
-pprint(D.query(frames=[1,5,67], columns=all_columns))
+print(D.query(frames=[1,5,67], columns=all_columns))
 #         frame  scan     tof  intensity           mz  inv_ion_mobility  retention_time
 # 0           1    33  312260          9  1174.655791          1.601142        0.326492
 # 1           1    34  220720          9   733.480941          1.600000        0.326492
@@ -51,7 +49,7 @@ pprint(D.query(frames=[1,5,67], columns=all_columns))
 
 
 # Get a dict with each 10th frame, starting from frame 2, finishing on frame 1000.   
-pprint(D.query(frames=slice(2,1000,10), columns=all_columns))
+print(D.query(frames=slice(2,1000,10), columns=all_columns))
 #         frame  scan     tof  intensity           mz  inv_ion_mobility  retention_time
 # 0           2    33   97298          9   302.347671          1.601142        0.434706
 # 1           2    33  310524          9  1165.327281          1.601142        0.434706
@@ -69,12 +67,12 @@ pprint(D.query(frames=slice(2,1000,10), columns=all_columns))
 
 
 # Get all MS1 frames 
-# pprint(D.query(frames=D.ms1_frames, columns=all_columns))
+# print(D.query(frames=D.ms1_frames, columns=all_columns))
 # ATTENTION: that's quite a lot of data!!! You might exceed your RAM.
 
 
 # If you want to extract not every possible columnt, but a subset, use the columns argument:
-pprint(D.query(frames=slice(2,1000,10), columns=('tof','intensity',)))
+print(D.query(frames=slice(2,1000,10), columns=('tof','intensity',)))
 #            tof  intensity
 # 0        97298          9
 # 1       310524          9
@@ -95,7 +93,7 @@ pprint(D.query(frames=slice(2,1000,10), columns=('tof','intensity',)))
 
 # Still too much memory used up? You can also iterate over frames:
 it = D.query_iter(slice(10,100,10), columns=all_columns)
-pprint(next(it))
+print(next(it))
 #        frame  scan     tof  intensity           mz  inv_ion_mobility  retention_time
 # 0         10    34  171284          9   538.225728          1.600000        1.293682
 # 1         10    36   31282          9   148.904423          1.597716        1.293682
@@ -112,7 +110,7 @@ pprint(next(it))
 # [11475 rows x 7 columns]
 
 
-pprint(next(it))
+print(next(it))
 #       frame  scan     tof  intensity           mz  inv_ion_mobility  retention_time
 # 0        20    33  359979         31  1445.637778          1.601142        2.366103
 # 1        20    33  371758         10  1516.851302          1.601142        2.366103
@@ -132,7 +130,7 @@ pprint(next(it))
 
 # All MS1 frames, but one at a time
 iterator_over_MS1 = D.query_iter(D.ms1_frames, columns=all_columns)
-pprint(next(it))
+print(next(it))
 #        frame  scan     tof  intensity          mz  inv_ion_mobility  retention_time
 # 0         30    33  210334          9  689.957428          1.601142        3.440561
 # 1         30    34   24628          9  136.421775          1.600000        3.440561
@@ -148,7 +146,7 @@ pprint(next(it))
 # 
 # [13081 rows x 7 columns]
 
-pprint(next(it))
+print(next(it))
 #       frame  scan     tof  intensity           mz  inv_ion_mobility  retention_time
 # 0        40    33  310182          9  1163.493906          1.601142        4.511882
 # 1        40    33  362121         11  1458.460526          1.601142        4.511882
@@ -171,8 +169,7 @@ pprint(next(it))
 # time of the experiment?
 # For this reasone, we have prepared a retention time based query:
 # suppose you are interested in all frames corresponding to all that eluted between 10 and 12
-# minute of the experiment.
-# Well, here goes nothing:
+# second of the experiment.
 D.rt_query(10,12)
 #         frame  scan     tof  ...           mz  inv_ion_mobility  retention_time
 # 0          92    33  361758  ...  1456.283499          1.601142       10.086899
@@ -192,7 +189,7 @@ D.rt_query(10,12)
 
 
 # Get numpy array with raw data in a given range 1:10
-pprint(D[1:10])
+print(D[1:10])
 # array([[     1,     33, 312260,      9],s
 #        [     1,     34, 220720,      9],
 #        [     1,     34, 261438,      9],

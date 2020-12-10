@@ -216,8 +216,7 @@ pprint(next(it))
 # time of the experiment?
 # For this reasone, we have prepared a retention time based query:
 # suppose you are interested in all frames corresponding to all that eluted between 10 and 12
-# minute of the experiment.
-# Well, here goes nothing:
+# second of the experiment.
 D.rt_query(10,12)
 #         frame  scan     tof  ...           mz  inv_ion_mobility  retention_time
 # 0          92    33  361758  ...  1456.283499          1.601142       10.086899
@@ -233,6 +232,7 @@ D.rt_query(10,12)
 # 128133    109   917  373182  ...  1525.576529          0.600774       11.910014
 
 # [128134 rows x 7 columns]
+
 
 
 
