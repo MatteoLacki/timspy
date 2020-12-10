@@ -5,6 +5,8 @@ reinstall: pyclean pipclean
 	pip install . --verbose --no-cache 
 py:
 	python -m IPython
+pydist:
+	python setup.py sdist
 pyclean:
 	rm -rf build dist timspy.egg-info
 pipclean:
@@ -25,7 +27,7 @@ docs: clean_docs
 clean_docs:
 	rm -rf sphinx
 	rm -rf docs
-pypi_test:
+pypi_test: pydist
 	twine upload --repository-url https://test.pypi.org/legacy/ dist/* 
-pypi:
+pypi: pydist
 	twine upload dist/*
