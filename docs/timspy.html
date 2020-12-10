@@ -44,20 +44,20 @@
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">opentimspy.opentims.OpenTIMS</span></code></p>
 <p>TimsData that uses info about Frames.</p>
 <dl class="py method">
-<dt id="timspy.df.TimsPyDF.intensity_given_mz_dt">
-<code class="sig-name descname">intensity_given_mz_dt</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">frames</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mz_bin_borders</span><span class="o">=</span><span class="default_value">array([500., 502., 504., ..., 2496., 2498., 2500.])</span></em>, <em class="sig-param"><span class="n">dt_bin_borders</span><span class="o">=</span><span class="default_value">array([0.8, 0.809, 0.818, 0.827, 0.836, 0.845, 0.854, 0.863, 0.872, 0.881, 0.89, 0.899, 0.908, 0.917, 0.926, 0.935, 0.944, 0.953, 0.962, 0.971, 0.98, 0.989, 0.998, 1.007, 1.016, 1.025, 1.034, 1.043, 1.052, 1.061, 1.07, 1.079, 1.088, 1.097, 1.106, 1.115, 1.124, 1.133, 1.142, 1.151, 1.16, 1.169, 1.178, 1.187, 1.196, 1.205, 1.214, 1.223, 1.232, 1.241, 1.25, 1.259, 1.268, 1.277, 1.286, 1.295, 1.304, 1.313, 1.322, 1.331, 1.34, 1.349, 1.358, 1.367, 1.376, 1.385, 1.394, 1.403, 1.412, 1.421, 1.43, 1.439, 1.448, 1.457, 1.466, 1.475, 1.484, 1.493, 1.502, 1.511, 1.52, 1.529, 1.538, 1.547, 1.556, 1.565, 1.574, 1.583, 1.592, 1.601, 1.61, 1.619, 1.628, 1.637, 1.646, 1.655, 1.664, 1.673, 1.682, 1.691, 1.7])</span></em><span class="sig-paren">)</span><a class="headerlink" href="#timspy.df.TimsPyDF.intensity_given_mz_dt" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sum intensity over m/z-drift time rectangles.</p>
+<dt id="timspy.df.TimsPyDF.intensity_given_mz_inv_ion_mobility">
+<code class="sig-name descname">intensity_given_mz_inv_ion_mobility</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">frames</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mz_bin_borders</span><span class="o">=</span><span class="default_value">array([500., 502., 504., ..., 2496., 2498., 2500.])</span></em>, <em class="sig-param"><span class="n">inv_ion_mobility_bin_borders</span><span class="o">=</span><span class="default_value">array([0.8, 0.809, 0.818, 0.827, 0.836, 0.845, 0.854, 0.863, 0.872, 0.881, 0.89, 0.899, 0.908, 0.917, 0.926, 0.935, 0.944, 0.953, 0.962, 0.971, 0.98, 0.989, 0.998, 1.007, 1.016, 1.025, 1.034, 1.043, 1.052, 1.061, 1.07, 1.079, 1.088, 1.097, 1.106, 1.115, 1.124, 1.133, 1.142, 1.151, 1.16, 1.169, 1.178, 1.187, 1.196, 1.205, 1.214, 1.223, 1.232, 1.241, 1.25, 1.259, 1.268, 1.277, 1.286, 1.295, 1.304, 1.313, 1.322, 1.331, 1.34, 1.349, 1.358, 1.367, 1.376, 1.385, 1.394, 1.403, 1.412, 1.421, 1.43, 1.439, 1.448, 1.457, 1.466, 1.475, 1.484, 1.493, 1.502, 1.511, 1.52, 1.529, 1.538, 1.547, 1.556, 1.565, 1.574, 1.583, 1.592, 1.601, 1.61, 1.619, 1.628, 1.637, 1.646, 1.655, 1.664, 1.673, 1.682, 1.691, 1.7])</span></em><span class="sig-paren">)</span><a class="headerlink" href="#timspy.df.TimsPyDF.intensity_given_mz_inv_ion_mobility" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sum intensity over m/z-inverse ion mobility rectangles.</p>
 <p>Typically it does not make too much sense to mix MS1 intensities with the others here.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>frames</strong> (<em>iterable</em>) – Frames to consider. Defaults to all ms1_frames.</p></li>
 <li><p><strong>mz_bin_borders</strong> (<em>np.array</em>) – Positions of bin borders for mass over charge ratios.</p></li>
-<li><p><strong>dt_bin_borders</strong> (<em>np.array</em>) – Positions of bin borders for drift times.</p></li>
+<li><p><strong>inv_ion_mobility_bin_borders</strong> (<em>np.array</em>) – Positions of bin borders for inverse ion mobilities.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>np.array with intensities, the positions of bin borders for mass over charge ratios and drift times.</p>
+<dd class="field-even"><p>np.array with intensities, the positions of bin borders for mass over charge ratios and inverse ion mobilities.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>tuple</p>
@@ -68,7 +68,7 @@
 <dl class="py method">
 <dt id="timspy.df.TimsPyDF.intensity_per_frame">
 <code class="sig-name descname">intensity_per_frame</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">recalibrated</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#timspy.df.TimsPyDF.intensity_per_frame" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get sum of intensity per each frame (dt).</p>
+<dd><p>Get sum of intensity per each frame (retention time).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>recalibrated</strong> (<em>bool</em>) – Use Bruker recalibrated total intensities or calculate them from scratch with OpenTIMS?</p>
@@ -97,17 +97,24 @@
 </dd></dl>
 
 <dl class="py method">
-<dt id="timspy.df.TimsPyDF.plot_intensity_given_mz_dt">
-<code class="sig-name descname">plot_intensity_given_mz_dt</code><span class="sig-paren">(</span><em class="sig-param">intensity_transformation=&lt;ufunc 'sqrt'&gt;</em>, <em class="sig-param">show=True</em>, <em class="sig-param">imshow_kwds={'aspect': 'auto'</em>, <em class="sig-param">'interpolation': 'nearest'}</em>, <em class="sig-param">**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#timspy.df.TimsPyDF.plot_intensity_given_mz_dt" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sum intensity over m/z-drift time rectangles.</p>
+<dt id="timspy.df.TimsPyDF.plot_intensity_given_mz_inv_ion_mobility">
+<code class="sig-name descname">plot_intensity_given_mz_inv_ion_mobility</code><span class="sig-paren">(</span><em class="sig-param">summed_intensity_matrix</em>, <em class="sig-param">mz_bin_borders</em>, <em class="sig-param">inv_ion_mobility_bin_borders</em>, <em class="sig-param">intensity_transformation=&lt;ufunc 'log2'&gt;</em>, <em class="sig-param">interpolation='lanczos'</em>, <em class="sig-param">aspect='auto'</em>, <em class="sig-param">cmap='inferno'</em>, <em class="sig-param">origin='lower'</em>, <em class="sig-param">show=True</em>, <em class="sig-param">**kwds</em><span class="sig-paren">)</span><a class="headerlink" href="#timspy.df.TimsPyDF.plot_intensity_given_mz_inv_ion_mobility" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sum intensity over m/z-inverse ion mobility rectangles.</p>
 <p>Plot a transformation of the sum of intensities.
 Usually, plotting the square root of summed intensities looks best.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>intensity_transformation</strong> (<em>np.ufunc</em>) – Function that transforms intensities. Default to square root.</p></li>
+<li><p><strong>summed_intensity_matrix</strong> (<em>np.array</em>) – 2D array with intensities, as produced by ‘intensity_given_mz_inv_ion_mobility’.</p></li>
+<li><p><strong>mz_bin_borders</strong> (<em>np.array</em>) – Positions of bin borders for mass over charge ratios.</p></li>
+<li><p><strong>inv_ion_mobility_bin_borders</strong> (<em>np.array</em>) – Positions of bin borders for inverse ion mobilities.</p></li>
+<li><p><strong>intensity_transformation</strong> (<em>np.ufunc</em>) – Function that transforms intensities. Default to logarithm with base 2.</p></li>
+<li><p><strong>interpolation</strong> (<em>str</em>) – Type of interpolation used in ‘matplotlib.pyplot.imshow’.</p></li>
+<li><p><strong>aspect</strong> (<em>str</em>) – Aspect ratio in ‘matplotlib.pyplot.imshow’.</p></li>
+<li><p><strong>cmap</strong> (<em>str</em>) – Color scheme for the ‘matplotlib.pyplot.imshow’.</p></li>
+<li><p><strong>origin</strong> (<em>str</em>) – Where should the origin of the coordinate system start? Defaults to bottom-left. Check ‘matplotlib.pyplot.imshow’.</p></li>
 <li><p><strong>show</strong> (<em>bool</em>) – Show the plot immediately, or just add it to the canvas?</p></li>
-<li><p><strong>**kwds</strong> – Keyword arguments for the ‘intensity_given_mz_dt’ method.</p></li>
+<li><p><strong>**kwds</strong> – Keyword arguments for ‘matplotlib.pyplot.imshow’ function.</p></li>
 </ul>
 </dd>
 </dl>
@@ -126,7 +133,7 @@ Usually, plotting the square root of summed intensities looks best.</p>
 
 <dl class="py method">
 <dt id="timspy.df.TimsPyDF.query">
-<code class="sig-name descname">query</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">frames</span></em>, <em class="sig-param"><span class="n">columns</span><span class="o">=</span><span class="default_value">('frame', 'scan', 'tof', 'intensity', 'mz', 'dt', 'rt')</span></em><span class="sig-paren">)</span><a class="headerlink" href="#timspy.df.TimsPyDF.query" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">query</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">frames</span></em>, <em class="sig-param"><span class="n">columns</span><span class="o">=</span><span class="default_value">('frame', 'scan', 'tof', 'intensity', 'mz', 'inv_ion_mobility', 'retention_time')</span></em><span class="sig-paren">)</span><a class="headerlink" href="#timspy.df.TimsPyDF.query" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get data from a selection of frames.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -178,6 +185,26 @@ Usually, plotting the square root of summed intensities looks best.</p>
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p>pd.DataTable</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="timspy.df.TimsPyDF.to_hdf">
+<code class="sig-name descname">to_hdf</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">target_path</span></em>, <em class="sig-param"><span class="n">columns</span><span class="o">=</span><span class="default_value">('frame', 'scan', 'tof', 'intensity', 'mz', 'inv_ion_mobility', 'retention_time')</span></em>, <em class="sig-param"><span class="n">compression</span><span class="o">=</span><span class="default_value">'gzip'</span></em>, <em class="sig-param"><span class="n">compression_level</span><span class="o">=</span><span class="default_value">9</span></em>, <em class="sig-param"><span class="n">shuffle</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">chunks</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">silent</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="headerlink" href="#timspy.df.TimsPyDF.to_hdf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert the data set to HDF5 compatible with ‘vaex’.</p>
+<p>Most of the arguments are documented on the h5py website.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target_path</strong> (<em>str</em>) – Where to write the file (folder will be automatically created). Cannot point to an already existing file.</p></li>
+<li><p><strong>columns</strong> (<em>tuple</em>) – Names of columns to export to HDF5.</p></li>
+<li><p><strong>compression</strong> (<em>str</em>) – Compression strategy.</p></li>
+<li><p><strong>compression_level</strong> (<em>str</em>) – Parameters for compression filter.</p></li>
+<li><p><strong>shuffle</strong> (<em>bool</em>) – Enable shuffle filter.</p></li>
+<li><p><strong>chunks</strong> (<em>int</em>) – Chunk shape, or True to enable auto-chunking.</p></li>
+<li><p><strong>silent</strong> (<em>bool</em>) – Skip progress bar</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -287,8 +314,8 @@ TimsVaex cannot be a subclass vaex.dataset.HDF5MappableStorage because of potent
 <em class="property">class </em><code class="sig-prename descclassname">timspy.vaex.</code><code class="sig-name descname">TimsVaex</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path2hdf</span></em>, <em class="sig-param"><span class="n">path2tdf</span></em><span class="sig-paren">)</span><a class="headerlink" href="#timspy.vaex.TimsVaex" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="py method">
-<dt id="timspy.vaex.TimsVaex.intensity_given_mz_dt">
-<code class="sig-name descname">intensity_given_mz_dt</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">frames</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mz_bin_borders</span><span class="o">=</span><span class="default_value">array([500., 502., 504., ..., 2496., 2498., 2500.])</span></em>, <em class="sig-param"><span class="n">dt_bin_borders</span><span class="o">=</span><span class="default_value">array([0.8, 0.809, 0.818, 0.827, 0.836, 0.845, 0.854, 0.863, 0.872, 0.881, 0.89, 0.899, 0.908, 0.917, 0.926, 0.935, 0.944, 0.953, 0.962, 0.971, 0.98, 0.989, 0.998, 1.007, 1.016, 1.025, 1.034, 1.043, 1.052, 1.061, 1.07, 1.079, 1.088, 1.097, 1.106, 1.115, 1.124, 1.133, 1.142, 1.151, 1.16, 1.169, 1.178, 1.187, 1.196, 1.205, 1.214, 1.223, 1.232, 1.241, 1.25, 1.259, 1.268, 1.277, 1.286, 1.295, 1.304, 1.313, 1.322, 1.331, 1.34, 1.349, 1.358, 1.367, 1.376, 1.385, 1.394, 1.403, 1.412, 1.421, 1.43, 1.439, 1.448, 1.457, 1.466, 1.475, 1.484, 1.493, 1.502, 1.511, 1.52, 1.529, 1.538, 1.547, 1.556, 1.565, 1.574, 1.583, 1.592, 1.601, 1.61, 1.619, 1.628, 1.637, 1.646, 1.655, 1.664, 1.673, 1.682, 1.691, 1.7])</span></em><span class="sig-paren">)</span><a class="headerlink" href="#timspy.vaex.TimsVaex.intensity_given_mz_dt" title="Permalink to this definition">¶</a></dt>
+<dt id="timspy.vaex.TimsVaex.intensity_given_mz_inv_ion_mobility">
+<code class="sig-name descname">intensity_given_mz_inv_ion_mobility</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">frames</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mz_bin_borders</span><span class="o">=</span><span class="default_value">array([500., 502., 504., ..., 2496., 2498., 2500.])</span></em>, <em class="sig-param"><span class="n">inv_ion_mobility_bin_borders</span><span class="o">=</span><span class="default_value">array([0.8, 0.809, 0.818, 0.827, 0.836, 0.845, 0.854, 0.863, 0.872, 0.881, 0.89, 0.899, 0.908, 0.917, 0.926, 0.935, 0.944, 0.953, 0.962, 0.971, 0.98, 0.989, 0.998, 1.007, 1.016, 1.025, 1.034, 1.043, 1.052, 1.061, 1.07, 1.079, 1.088, 1.097, 1.106, 1.115, 1.124, 1.133, 1.142, 1.151, 1.16, 1.169, 1.178, 1.187, 1.196, 1.205, 1.214, 1.223, 1.232, 1.241, 1.25, 1.259, 1.268, 1.277, 1.286, 1.295, 1.304, 1.313, 1.322, 1.331, 1.34, 1.349, 1.358, 1.367, 1.376, 1.385, 1.394, 1.403, 1.412, 1.421, 1.43, 1.439, 1.448, 1.457, 1.466, 1.475, 1.484, 1.493, 1.502, 1.511, 1.52, 1.529, 1.538, 1.547, 1.556, 1.565, 1.574, 1.583, 1.592, 1.601, 1.61, 1.619, 1.628, 1.637, 1.646, 1.655, 1.664, 1.673, 1.682, 1.691, 1.7])</span></em><span class="sig-paren">)</span><a class="headerlink" href="#timspy.vaex.TimsVaex.intensity_given_mz_inv_ion_mobility" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
