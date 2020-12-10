@@ -2,3 +2,6 @@
 __pycache__
 .python-version
 *_dev
+sphinx
+*/dev
+dist

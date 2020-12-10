@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(  name='timspy',
         packages=find_packages(),
-        version='0.9.0',
+        version='0.9.2',
         description='TimsPy: access for raw timsTOF Pro data for data scientists',
         long_description='TimsPy facilitates access to the raw data gathered by timsTOF Pro mass spectrometer. Directly see data in the long format in the familiar Pandas DataFrame object.',
         author='MatteoLacki',
@@ -20,8 +20,14 @@ setup(  name='timspy',
         install_requires=['pandas',
                           'opentimspy',
                           'matplotlib',
-                          'opentims_bruker_bridge'],
+                          'opentims_bruker_bridge',
+                          'tqdm'],
         extras_require={
-            'vaex': ['vaex-core', 'vaex-hdf5'],
+            'vaex': ['vaex-core',
+                     'vaex-hdf5',
+                     'h5py'],
         },
+        scripts = [
+            'bin/tims2hdf5.py'
+        ]
 )
