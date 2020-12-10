@@ -306,7 +306,14 @@ D.plot_peak_counts()
 ![](https://github.com/MatteoLacki/timspy/blob/master/ms1ms2peak_counts.png "TIC per frame")
 
 ```python
-D.plot_intensity_given_mz_inv_ion_mobility()
+intensities_matrix, mz_bin_borders, inv_ion_mobility_bin_borders = \
+    D.intensity_given_mz_inv_ion_mobility()
+
+D.plot_intensity_given_mz_inv_ion_mobility(
+    intensities_matrix, 
+    mz_bin_borders,
+    inv_ion_mobility_bin_borders
+)
 ```
 ![](https://github.com/MatteoLacki/timspy/blob/master/ms1_heatmap.png "TIC per frame")
 

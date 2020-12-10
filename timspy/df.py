@@ -160,12 +160,18 @@ class TimsPyDF(OpenTIMS):
         return I, mz_bin_borders, inv_ion_mobility_bin_borders
 
 
-    def plot_intensity_given_mz_inv_ion_mobility(self, 
-                                   intensity_transformation=np.sqrt,
-                                   show=True,
-                                   imshow_kwds={'interpolation':'nearest',
-                                                'aspect':'auto'},
-                                   **kwds):
+    def plot_intensity_given_mz_inv_ion_mobility(
+            self,
+            summed_intensity_matrix,
+            mz_bin_borders,
+            inv_ion_mobility_bin_borders,
+            intensity_transformation=np.log2,
+            interpolation='lanczos',
+            aspect='auto',
+            cmap='inferno',
+            origin='lower',
+            show=True,
+            **kwds):
         """Sum intensity over m/z-inverse ion mobility rectangles.
 
         Plot a transformation of the sum of intensities.
@@ -173,20 +179,36 @@ class TimsPyDF(OpenTIMS):
 
 
         Arguments:
-            intensity_transformation (np.ufunc): Function that transforms intensities. Default to square root.
+            summed_intensity_matrix (np.array): 2D array with intensities, as produced by 'intensity_given_mz_inv_ion_mobility'.
+            mz_bin_borders (np.array): Positions of bin borders for mass over charge ratios.
+            inv_ion_mobility_bin_borders (np.array): Positions of bin borders for inverse ion mobilities.
+            intensity_transformation (np.ufunc): Function that transforms intensities. Default to logarithm with base 2.
+            interpolation (str): Type of interpolation used in 'matplotlib.pyplot.imshow'.
+            aspect (str): Aspect ratio in 'matplotlib.pyplot.imshow'.
+            cmap (str): Color scheme for the 'matplotlib.pyplot.imshow'.
+            origin (str): Where should the origin of the coordinate system start? Defaults to bottom-left. Check 'matplotlib.pyplot.imshow'. 
             show (bool): Show the plot immediately, or just add it to the canvas?
-            **kwds: Keyword arguments for the 'intensity_given_mz_inv_ion_mobility' method.
+            **kwds: Keyword arguments for 'matplotlib.pyplot.imshow' function.
         """
         import matplotlib.pyplot as plt
-        
-        I, mz_bin_borders, inv_ion_mobility_bin_borders = self.intensity_given_mz_inv_ion_mobility(**kwds)
-        plt.imshow(intensity_transformation(I),
-                   extent=[mz_bin_borders[0], mz_bin_borders[-1],
-                           inv_ion_mobility_bin_borders[0], inv_ion_mobility_bin_borders[-1]],
-                   **imshow_kwds)
+
+        plt.imshow(intensity_transformation(summed_intensity_matrix.T),
+                   extent=[mz_bin_borders[0],
+                           mz_bin_borders[-1],
+                           inv_ion_mobility_bin_borders[0],
+                           inv_ion_mobility_bin_borders[-1]],
+                   interpolation=interpolation,
+                   aspect=aspect,
+                   cmap=cmap,
+                   origin=origin,
+                   **kwds)
         plt.xlabel("Mass / Charge")
         plt.ylabel("Inverse Ion Mobility")
-        plt.title("Total Intensity")
+        try:
+            title = f"{intensity_transformation.__name__}( Total Intensity )"
+        except AttributeError:
+            title = "Total Intensity"
+        plt.title(title)
         if show:
             plt.show()
 

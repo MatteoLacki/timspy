@@ -248,4 +248,12 @@ D.frames
 # And here are some plotting functions:
 D.plot_TIC()
 D.plot_peak_counts()
-D.plot_intensity_given_mz_inv_ion_mobility()
+
+intensities_matrix, mz_bin_borders, inv_ion_mobility_bin_borders = \
+    D.intensity_given_mz_inv_ion_mobility()
+
+D.plot_intensity_given_mz_inv_ion_mobility(
+    intensities_matrix, 
+    mz_bin_borders,
+    inv_ion_mobility_bin_borders
+)
