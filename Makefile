@@ -32,4 +32,4 @@ pypi:
 	twine upload dist/*
 test_get_TIC:
 	python bin/get_TIC.py -h
-	python bin/get_TIC.py "/home/matteo/Projects/bruker/BrukerMIDIA/MIDIA_CE10_precursor/20190912_HeLa_Bruker_TEN_MIDIA_200ng_CE10_100ms_Slot1-9_1_488.d"
+	python bin/get_TIC.py "/home/matteo/Projects/bruker/BrukerMIDIA/MIDIA_CE10_precursor/20190912_HeLa_Bruker_TEN_MIDIA_200ng_CE10_100ms_Slot1-9_1_488.d" --plot
