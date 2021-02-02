@@ -28,6 +28,7 @@ setup(  name='timspy',
                      'h5py'],
         },
         scripts = [
-            'bin/tims2hdf5.py'
+            'bin/tims2hdf5.py',
+            'bin/get_TIC.py'
         ]
 )

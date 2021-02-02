@@ -129,7 +129,8 @@ class TimsPyDF(OpenTIMS):
     def intensity_given_mz_inv_ion_mobility(self,
                                             frames=None,
                                             mz_bin_borders=np.linspace(500, 2500, 1001),
-                                            inv_ion_mobility_bin_borders=np.linspace(0.8, 1.7, 101)):
+                                            inv_ion_mobility_bin_borders=np.linspace(0.8, 1.7, 101),
+                                            verbose=False):
         """Sum intensity over m/z-inverse ion mobility rectangles.
 
         Typically it does not make too much sense to mix MS1 intensities with the others here.
@@ -143,14 +144,21 @@ class TimsPyDF(OpenTIMS):
         """
         if frames is None:
             frames = self.ms1_frames
+        else:
+            frames = list(frames)
+
+        frame_datasets = self.query_iter(frames=frames,
+                                         columns=('mz','inv_ion_mobility','intensity'))
 
         I = np.zeros(shape=(len(mz_bin_borders)-1,
                             len(inv_ion_mobility_bin_borders)-1),
                      dtype=float)
         # float because numpy does not have histogram2d with ints 
 
-        for X in self.query_iter(frames=frames,
-                                 columns=('mz','inv_ion_mobility','intensity')):
+        if verbose:
+            frame_datasets = tqdm.tqdm(frame_datasets, total=len(frames)) 
+
+        for X in frame_datasets:
             I_fr, _,_ = np.histogram2d(X.mz, X.inv_ion_mobility,
                                        bins=[mz_bin_borders,
                                              inv_ion_mobility_bin_borders], 
