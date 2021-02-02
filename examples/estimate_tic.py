@@ -53,8 +53,7 @@ def getI(D, min_mz, max_mz, window_cnt_mz, min_scan, max_scan, window_cnt_scan):
     return I, mz_bin_borders, scan_bin_borders
 
 I1000,_,_ = getI(D, min_mz, max_mz, 1000, min_scan, max_scan, 1000)
-I50,_,_ = getI(D, min_mz, max_mz, 50, min_scan, max_scan, 50)
-
+I50,  _,_ = getI(D, min_mz, max_mz, 50, min_scan, max_scan, 50)
 
 
 plt.imshow(I.T,
