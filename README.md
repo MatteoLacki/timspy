@@ -9,6 +9,12 @@ Python3.6 or higher versions are tested.
 
 On Windows, install Microsoft Visual Studio from [here](https://visualstudio.microsoft.com/visual-cpp-build-tools/) to make use of C++ or Python code.
 On Linux, have clang++ or g++ installed (clang is better).
+Also, do make sure that a developper version of Python is installed.
+For instance, on Ubuntu, install Python with
+```bash
+sudo apt install python3.8-dev
+```
+i.e. with the `-dev` version. This contains headers needed for pybind to work properly.
 On macOS, [install x-tools command line tools](https://www.godo.dev/tutorials/xcode-command-line-tools-installation-faq/).
 
  
