@@ -26,7 +26,11 @@ class TimsPyDF(OpenTIMS):
                                   dtype=bool)
         self._ms1_mask[self.ms1_frames-1] = True
         self.retention_time = self.frames.Time.values
-
+        self.GlobalMetadata = self.table2df('GlobalMetadata').set_index('Key')
+        self.min_mz = float(self.GlobalMetadata.Value['MzAcqRangeLower'])
+        self.max_mz = float(self.GlobalMetadata.Value['MzAcqRangeUpper'])
+        self.min_inv_ion_mobility = float(self.GlobalMetadata.Value['OneOverK0AcqRangeLower'])
+        self.max_inv_ion_mobility = float(self.GlobalMetadata.Value['OneOverK0AcqRangeUpper'])
 
     def tables_names(self):
         """List names of tables in the SQLite db.

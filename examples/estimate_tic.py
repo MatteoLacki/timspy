@@ -2,7 +2,7 @@
 %autoreload 2
 import pandas as pd
 pd.set_option('display.max_columns', None)
-pd.set_option('display.max_rows', 15)
+pd.set_option('display.max_rows', 50)
 import numpy as np
 import pathlib
 import matplotlib.pyplot as plt
@@ -13,30 +13,32 @@ from timspy.df import TimsPyDF
 # path = pathlib.Path('path_to_your_data.d')
 path = pathlib.Path('/home/matteo/Projects/bruker/BrukerMIDIA/MIDIA_CE10_precursor/20190912_HeLa_Bruker_TEN_MIDIA_200ng_CE10_100ms_Slot1-9_1_488.d')
 D = TimsPyDF(path) # get data handle
+D.tables_names()
 
 # naive estimator: the to
 D.frames.SummedIntensities
 
 # Cutting away the cloud with ones:
 
+
 mz_bins_cnt = 1000
 inv_ion_mobility_bins_cnt = 100
 
-min_inv_ion_mobility = 0
-max_inv_ion_mobility = 2
 # another thing: how does this compare to 
-GlobalMetadata = D.table2df('GlobalMetadata').set_index('Key')
-min_mz = int(float(GlobalMetadata.Value['MzAcqRangeLower'])) - 1
-max_mz = int(float(GlobalMetadata.Value['MzAcqRangeUpper'])) + 1
+min_mz = int(D.min_mz) - 1
+max_mz = int(D.max_mz) + 1
 mz_bin_borders = np.linspace(min_mz, max_mz, mz_bins_cnt)
-inv_ion_mobility_bin_borders = np.linspace(min_inv_ion_mobility,
-                                           max_inv_ion_mobility,
-                                           window_cnt_inv+1)
+
+inv_ion_mobility_bin_borders = np.linspace(D.min_inv_ion_mobility,
+                                           D.max_inv_ion_mobility,
+                                           inv_ion_mobility_bins_cnt+1)
+
 # getting initial intenisities
 intensities_matrix, mz_bin_borders, inv_ion_mobility_bin_borders = \
     D.intensity_given_mz_inv_ion_mobility(D.ms1_frames,
                                           mz_bin_borders,
-                                          inv_ion_mobility_bin_borders)
+                                          inv_ion_mobility_bin_borders,
+                                          verbose=True)
 
 def abline(slope, intercept, **kwds):
     """Plot a line from slope and intercept"""
@@ -65,8 +67,7 @@ def abline(slope, intercept, **kwds):
 #  hence: default condition:
 cond = "inv_ion_mobility < .0009*mz + .4744 & \
         inv_ion_mobility > .6 & \
-        inv_ion_mobility < 1.5 & \
-        mz < 1300"
+        inv_ion_mobility < 1.5"
 plot_selection = True
 
 # the real code!
