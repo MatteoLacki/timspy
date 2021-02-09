@@ -122,7 +122,7 @@ for folder in args.folders:
 out = pd.DataFrame({ 'folder': [f.name for f in args.folders],
                      'path':   args.folders,
                      'TIC':    all_TICs,
-                     'TIC_selected_region': TIC_selected_region})
+                     'TIC_selected_region': all_selected_region_TICs})
 
 out.to_csv(path_or_buf=args.output, index=False)
 
