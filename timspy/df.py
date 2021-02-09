@@ -26,6 +26,8 @@ class TimsPyDF(OpenTIMS):
                                   dtype=bool)
         self._ms1_mask[self.ms1_frames-1] = True
         self.retention_time = self.frames.Time.values
+        self.min_retention_time =  min(self.retention_time)
+        self.max_retention_time =  max(self.retention_time)
         self.GlobalMetadata = self.table2df('GlobalMetadata').set_index('Key')
         self.min_mz = float(self.GlobalMetadata.Value['MzAcqRangeLower'])
         self.max_mz = float(self.GlobalMetadata.Value['MzAcqRangeUpper'])
@@ -132,8 +134,8 @@ class TimsPyDF(OpenTIMS):
     #TODO: this should be reimplemented later on in C++, single core...
     def intensity_given_mz_inv_ion_mobility(self,
                                             frames=None,
-                                            mz_bin_borders=np.linspace(500, 2500, 1001),
-                                            inv_ion_mobility_bin_borders=np.linspace(0.8, 1.7, 101),
+                                            mz_bin_borders=None,
+                                            inv_ion_mobility_bin_borders=None,
                                             verbose=False):
         """Sum intensity over m/z-inverse ion mobility rectangles.
 
@@ -150,6 +152,11 @@ class TimsPyDF(OpenTIMS):
             frames = self.ms1_frames
         else:
             frames = list(frames)
+
+        if mz_bin_borders is None:
+            mz_bin_borders = np.arange(np.floor(self.min_mz), np.ceil(self.max_mz), 0.5) # half a dalton bins
+        if inv_ion_mobility_bin_borders is None:
+            inv_ion_mobility_bin_borders = np.linspace(self.min_inv_ion_mobility, self.max_inv_ion_mobility, 101) # one hundred bins in inerserve ion mobility
 
         frame_datasets = self.query_iter(frames=frames,
                                          columns=('mz','inv_ion_mobility','intensity'))
@@ -177,12 +184,13 @@ class TimsPyDF(OpenTIMS):
             summed_intensity_matrix,
             mz_bin_borders,
             inv_ion_mobility_bin_borders,
-            intensity_transformation=np.log2,
+            intensity_transformation=np.sqrt,
             interpolation='lanczos',
             aspect='auto',
             cmap='inferno',
             origin='lower',
             show=True,
+            title=None,
             **kwds):
         """Sum intensity over m/z-inverse ion mobility rectangles.
 
@@ -194,7 +202,7 @@ class TimsPyDF(OpenTIMS):
             summed_intensity_matrix (np.array): 2D array with intensities, as produced by 'intensity_given_mz_inv_ion_mobility'.
             mz_bin_borders (np.array): Positions of bin borders for mass over charge ratios.
             inv_ion_mobility_bin_borders (np.array): Positions of bin borders for inverse ion mobilities.
-            intensity_transformation (np.ufunc): Function that transforms intensities. Default to logarithm with base 2.
+            intensity_transformation (np.ufunc): Function that transforms intensities. Defaults to square root.
             interpolation (str): Type of interpolation used in 'matplotlib.pyplot.imshow'.
             aspect (str): Aspect ratio in 'matplotlib.pyplot.imshow'.
             cmap (str): Color scheme for the 'matplotlib.pyplot.imshow'.
@@ -216,10 +224,11 @@ class TimsPyDF(OpenTIMS):
                    **kwds)
         plt.xlabel("Mass / Charge")
         plt.ylabel("Inverse Ion Mobility")
-        try:
-            title = f"{intensity_transformation.__name__}( Total Intensity )"
-        except AttributeError:
-            title = "Total Intensity"
+        if title is None:
+            try:
+                title = f"{intensity_transformation.__name__}( Total Intensity )"
+            except AttributeError:
+                title = "Total Intensity"
         plt.title(title)
         if show:
             plt.show()

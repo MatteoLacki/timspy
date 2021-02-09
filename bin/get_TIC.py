@@ -5,9 +5,6 @@ import pandas as pd
 import pathlib
 
 from timspy.df import TimsPyDF
-import tqdm
-
-DEBUG = False
 
 ap = argparse.ArgumentParser(description='Calculate the Total Ion Current for a given selection of points.',
   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -21,6 +18,11 @@ ARG = ap.add_argument
 ARG('folders',
     nargs='+',
     help="Path(s) to a timsTOF .d folder(s) containing 'analysis.tdf' and 'analysis.tdf_raw'.",
+    type=pathlib.Path)
+
+ARG('--output',
+    help="Path where to save output to.",
+    default=pathlib.Path('./TICS.csv'),
     type=pathlib.Path)
 
 ARG('--condition', 
@@ -46,68 +48,37 @@ ARG("--verbose",
     action='store_true')
 
 
+def abline(slope, intercept, **kwds):
+    """Plot a line from slope and intercept"""
+    axes = plt.gca()
+    x_vals = np.array(axes.get_xlim())
+    y_vals = intercept + slope * x_vals
+    plt.plot(x_vals, y_vals, '--', **kwds)
+
+
 args = ap.parse_args()
-
-if DEBUG:
-  print(args.__dict__)
-
 assert all(folder.exists() for folder in args.folders), "The data folder unavailable."
 
 all_TICs = []
 all_selected_region_TICs = []
 
 for folder in args.folders:
-
     D = TimsPyDF(folder) # get data handle
-
-    # getting m/z range.
     min_mz = int(D.min_mz) - 1
     max_mz = int(D.max_mz) + 1
     mz_bin_borders = \
         np.linspace(min_mz, 
                     max_mz,
                     args.mz_bins_cnt+1)
-
     inv_ion_mobility_bin_borders = \
         np.linspace(D.min_inv_ion_mobility,
                     D.max_inv_ion_mobility,
                     args.inv_ion_mobility_bins_cnt+1)
-
-    # getting intensities
     intensities_matrix, _, _ = \
         D.intensity_given_mz_inv_ion_mobility(D.ms1_frames,
                                               mz_bin_borders,
                                               inv_ion_mobility_bin_borders,
                                               verbose=True)
-
-    def abline(slope, intercept, **kwds):
-        """Plot a line from slope and intercept"""
-        axes = plt.gca()
-        x_vals = np.array(axes.get_xlim())
-        y_vals = intercept + slope * x_vals
-        plt.plot(x_vals, y_vals, '--', **kwds)
-
-
-    # # getting defaults
-    # x0,y0 = 331.5, 0.767 
-    # x1,y1 = 1254.0, 1.581
-    # A = (y1-y0)/(x1-x0)
-    # B = y0 - A*x0
-
-    # D.plot_intensity_given_mz_inv_ion_mobility(
-    #     intensities_matrix, 
-    #     mz_bin_borders,
-    #     inv_ion_mobility_bin_borders,
-    #     intensity_transformation = lambda x:x,
-    #     show=False)
-    # abline(A, B)
-    # abline(.0009, .4744, c='red')
-    # abline(.001, .474, c='green')
-    # plt.show()
-    #  hence: default condition:
-    # cond = "inv_ion_mobility < .0009*mz + .4744 & \
-    #         inv_ion_mobility > .6 & \
-    #         inv_ion_mobility < 1.5"
 
     iim_bin_mids = (inv_ion_mobility_bin_borders[1:] + inv_ion_mobility_bin_borders[:-1]) / 2
     mz_bin_mids = (mz_bin_borders[1:] + mz_bin_borders[:-1]) / 2
@@ -153,5 +124,5 @@ out = pd.DataFrame({ 'folder': [f.name for f in args.folders],
                      'TIC':    all_TICs,
                      'TIC_selected_region': TIC_selected_region})
 
-print(out)
+out.to_csv(path_or_buf=args.output, index=False)
 
