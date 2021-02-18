@@ -20,28 +20,24 @@ class TimsPyDF(OpenTIMS):
             analysis_directory (str, unicode string): path to the folder containing 'analysis.tdf' and 'analysis.tdf_raw'.
         """
         super().__init__(analysis_directory)
-        self.frames = self.table2df("frames").sort_values('Id')
-        self.frames_no = self.max_frame-self.min_frame+1
-        self._ms1_mask = np.zeros(self.frames_no,
-                                  dtype=bool)
-        self._ms1_mask[self.ms1_frames-1] = True
-        self.retention_time = self.frames.Time.values
-        self.min_retention_time =  min(self.retention_time)
-        self.max_retention_time =  max(self.retention_time)
-        self.GlobalMetadata = self.table2df('GlobalMetadata').set_index('Key')
-        self.min_mz = float(self.GlobalMetadata.Value['MzAcqRangeLower'])
-        self.max_mz = float(self.GlobalMetadata.Value['MzAcqRangeUpper'])
-        self.min_inv_ion_mobility = float(self.GlobalMetadata.Value['OneOverK0AcqRangeLower'])
-        self.max_inv_ion_mobility = float(self.GlobalMetadata.Value['OneOverK0AcqRangeUpper'])
+        self.frames = pd.DataFrame(self.frames)
 
-    def tables_names(self):
-        """List names of tables in the SQLite db.
+    def min_max_measurements(self):
+        """Get border values for measurements.
+
+        Get the min-max values of the measured variables (except for TOFs, that would require iteration through data rather than parsing metadata).
 
         Returns:
-            pd.DataTable: table with names of tables one can get with 'table2df'.
+            pd.DataFrame: Limits of individual extracted quantities. 
         """
-        return tables_names(self.analysis_directory/'analysis.tdf')
-
+        X = pd.DataFrame({'statistic':['min','max'],
+                          'frame':[self.min_frame, self.max_frame],
+                          'scan':[self.min_scan, self.max_scan],
+                          'intensity':[self.min_intensity, self.max_intensity],
+                          'retention_time':[self.min_retention_time, self.max_retention_time],
+                          'inv_ion_mobility':[self.min_inv_ion_mobility, self.max_inv_ion_mobility],
+                          'mz':[self.min_mz,self.max_mz]}).set_index('statistic')
+        return X
 
     def table2df(self, name):
         """Retrieve a table with SQLite connection from a data base.
@@ -53,20 +49,27 @@ class TimsPyDF(OpenTIMS):
         """
         return table2df(self.analysis_directory/'analysis.tdf', name)
 
- 
     def __repr__(self):
         return f"{self.__class__.__name__}({self.peaks_cnt} peaks)"
-
 
     def summary(self):
         """Print a short summary of the data content.
 
         Includes the number of peaks, the minimal and the maximal frame numbers.
         """
-        print(f"Peaks Inside:   {self.peaks_cnt}")
-        print(f"Minimal Frame:  {self.min_frame}")
-        print(f"Maximal Frame:  {self.max_frame}")
-
+        print(f"Peaks Inside:\t\t\t{self.peaks_cnt}")
+        print(f"minimal frame:\t\t\t{self.min_frame}")
+        print(f"maximal frame:\t\t\t{self.max_frame}")
+        print(f"minimal scan:\t\t\t{self.min_scan}")
+        print(f"maximal scan:\t\t\t{self.max_scan}")
+        print(f"minimal intensity:\t\t{self.min_intensity}")
+        print(f"maximal intensity:\t\t{self.max_intensity}")
+        print(f"minimal retention time [s]:\t{self.min_retention_time}")
+        print(f"maximal retention time [s]:\t{self.max_retention_time}")
+        print(f"minimal inverse ion mobility:\t{self.min_inv_ion_mobility}")
+        print(f"maximal inverse ion mobility:\t{self.max_inv_ion_mobility}")
+        print(f"minimal mass to charge ratio:\t{self.min_mz}")
+        print(f"maximal mass to charge ratio:\t{self.max_mz}")
 
     def query(self, frames, columns=all_columns):
         """Get data from a selection of frames.
@@ -89,8 +92,8 @@ class TimsPyDF(OpenTIMS):
         import matplotlib.pyplot as plt
         MS1 = self._ms1_mask
         NP = self.frames.NumPeaks
-        plt.plot(self.retention_time[ MS1], NP[ MS1], label="MS1")
-        plt.plot(self.retention_time[~MS1], NP[~MS1], label="MS2")
+        plt.plot(self.retention_times[ MS1], NP[ MS1], label="MS1")
+        plt.plot(self.retention_times[~MS1], NP[~MS1], label="MS2")
         plt.legend()
         plt.xlabel("Retention Time")
         plt.ylabel("Number of Peaks")
@@ -121,8 +124,8 @@ class TimsPyDF(OpenTIMS):
         import matplotlib.pyplot as plt
         MS1 = self._ms1_mask
         I = self.intensity_per_frame(recalibrated)
-        plt.plot(self.retention_time[ MS1], I[ MS1], label="MS1")
-        plt.plot(self.retention_time[~MS1], I[~MS1], label="MS2")
+        plt.plot(self.retention_times[ MS1], I[ MS1], label="MS1")
+        plt.plot(self.retention_times[~MS1], I[~MS1], label="MS2")
         plt.legend()
         plt.xlabel("Retention Time")
         plt.ylabel("Intensity")
