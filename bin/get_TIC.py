@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pathlib
+from datetime import datetime
 
 from timspy.df import TimsPyDF
 import tqdm
@@ -21,6 +22,11 @@ ARG = ap.add_argument
 ARG('folders',
     nargs='+',
     help="Path(s) to a timsTOF .d folder(s) containing 'analysis.tdf' and 'analysis.tdf_raw'.",
+    type=pathlib.Path)
+
+ARG('--output',
+    help="Path where to save output to.",
+    default=pathlib.Path(f'C:/TICS/TIC_{datetime.now().strftime("%d_%m_%Y__%H_%M_%S")}.csv'),
     type=pathlib.Path)
 
 ARG('--condition', 
@@ -151,7 +157,9 @@ for folder in args.folders:
 out = pd.DataFrame({ 'folder': [f.name for f in args.folders],
                      'path':   args.folders,
                      'TIC':    all_TICs,
-                     'TIC_selected_region': TIC_selected_region})
+                     'TIC_selected_region': all_selected_region_TICs})
 
-print(out)
+args.output.parent.mkdir(parents=True, exist_ok=True)
+out.to_csv(path_or_buf=args.output, index=False)
+
 
