@@ -12,6 +12,7 @@ ap = argparse.ArgumentParser(description='Calculate the Total Ion Current for a 
 default_condition = "inv_ion_mobility < .0009*mz + .4744 & \
                      inv_ion_mobility > .6 & \
                      inv_ion_mobility < 1.5"
+# TODO: change this condition: there are limits for inv_ion_mobility in the sqlite DB.
 
 ARG = ap.add_argument
 
