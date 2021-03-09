@@ -216,10 +216,18 @@ class TimsPyDF(OpenTIMS):
         x = frame[variables[0]]
         y = frame[variables[1]]
         w = frame[variables[2]] if len(variables) == 3 else None
+
         binned_frame = histogram2d(x, y,
                                    bins=(bins_row, bins_column),
                                    range=((min_row, max_row), (min_column, max_column)),
                                    weights=w)
+
+        if False:
+            print(x,y,w,bins_row, bins_column,min_row, max_row,min_column, max_column)
+            import collections
+            counts = collections.Counter(binned_frame.astype("uint64").flatten())
+            print(counts)
+            print()
         return binned_frame
 
     def bin_frames(self,
