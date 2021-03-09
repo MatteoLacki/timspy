@@ -173,7 +173,6 @@ class TimsPyDF(OpenTIMS):
         I = np.zeros(shape=(len(mz_bin_borders)-1,
                             len(inv_ion_mobility_bin_borders)-1),
                      dtype=float)
-        # float because numpy does not have histogram2d with ints 
 
         if verbose:
             frame_datasets = tqdm.tqdm(frame_datasets, total=len(frames)) 
@@ -196,7 +195,8 @@ class TimsPyDF(OpenTIMS):
                     min_column,
                     max_column,
                     bins_column,
-                    variables=("mz", "inv_ion_mobility", "intensity")):
+                    variables=("mz", "inv_ion_mobility", "intensity"),
+                    _save_as_uint64=True):
         """Bin a given frame into an equally-spaced grid.
 
         Arguments:
@@ -208,6 +208,7 @@ class TimsPyDF(OpenTIMS):
             max_column (float): The upper border for column dimension.
             bins_column (int): The number of equally sized bins for column dimension.
             variables (tuple): Names of columns corresponding to rows and columns of the output. If the third value is 'intensity', output corresponds to TICs. If it is left out, the output corresponds to peak counts.
+            _save_as_uint64 (bool): Recast to a more proper data format. This gives a time penalty.
 
         Returns:
             np.array: A 'bins_row' times 'bins_column' array with rows corresponding to 'variables[0]' and columns to 'variables[1]'. If 'variables[2]' was provided it will be used as weights, so it should be non-negative, like 'intensity'. In that case the output contains Total Ion Count. If it is not provided and 'len(variables)==2', then the output correspond to peak counts.
@@ -216,18 +217,11 @@ class TimsPyDF(OpenTIMS):
         x = frame[variables[0]]
         y = frame[variables[1]]
         w = frame[variables[2]] if len(variables) == 3 else None
-
         binned_frame = histogram2d(x, y,
                                    bins=(bins_row, bins_column),
                                    range=((min_row, max_row), (min_column, max_column)),
                                    weights=w)
-
-        if False:
-            print(x,y,w,bins_row, bins_column,min_row, max_row,min_column, max_column)
-            import collections
-            counts = collections.Counter(binned_frame.astype("uint64").flatten())
-            print(counts)
-            print()
+        #TODO: in C++ simply use uint64_t
         return binned_frame
 
     def bin_frames(self,
@@ -241,6 +235,7 @@ class TimsPyDF(OpenTIMS):
                    bins_column=100,
                    desaggregate=False,
                    return_df=True,
+                   multiplier=1.01,
                    verbose=False):
         """Get summary of TIC or peak count for a grid of bins in m/z and inverse ion mobility space.
 
@@ -258,6 +253,7 @@ class TimsPyDF(OpenTIMS):
             bins_column (int): The number of equally sized bins for column dimension.
             desaggregate (bool): Set to True if the outcome should not be aggrageted, see 'Returns'. Watch out, you might get out of RAM if you choose too many frames or too fine a grid.
             return_df (bool): Represent the output as a pandas.DataFrame?
+            multiplier (float): The relative stretch to the min and max values. New minimum is min/multiplier, new maximum is max*multiplier. This is put in place only when you do not pass in any of these values. 
             verbose (bool): Show progress bar?
 
         Returns:
@@ -272,22 +268,22 @@ class TimsPyDF(OpenTIMS):
         cols = variables[1]
 
         if min_row is None:
-            min_row = getattr(self, f"min_{rows}")
+            min_row = getattr(self, f"min_{rows}") / multiplier
 
         if max_row is None:
-            max_row = getattr(self, f"max_{rows}")
+            max_row = getattr(self, f"max_{rows}") * multiplier
 
         if min_column is None:
-            min_column = getattr(self, f"min_{cols}")
+            min_column = getattr(self, f"min_{cols}") / multiplier
 
         if max_column is None:
-            max_column = getattr(self, f"max_{cols}")
+            max_column = getattr(self, f"max_{cols}") * multiplier
 
         stats_shape = (len(frames), bins_row, bins_column) if desaggregate else (bins_row, bins_column) 
-        frames_stats = np.zeros(shape=stats_shape, dtype=float) # unfortunately, only float
+        frames_stats = np.zeros(shape=stats_shape, dtype=float)
+
         # We should have that fixed in C++.
         # actually, no need to zero them, but...
-
         bin_borders = {rows: np.linspace(min_row, max_row, bins_row+1),
                        cols: np.linspace(min_column, max_column, bins_column+1)}
 
@@ -313,6 +309,7 @@ class TimsPyDF(OpenTIMS):
             frames_stats_df = pd.DataFrame(frames_stats, index=row_mids, columns=col_mids)
             frames_stats_df.index.name = rows
             frames_stats_df.columns.name = cols
+            frames_stats_df = frames_stats_df.astype("uint64", copy=False)
             return frames_stats_df, bin_borders
         else:
             return frames_stats, bin_borders
