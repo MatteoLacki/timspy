@@ -58,7 +58,7 @@ def abline(slope, intercept, **kwds):
 
 
 args = ap.parse_args()
-assert all(folder.exists() for folder in args.folders), "The data folder unavailable."
+# assert all(folder.exists() for folder in args.folders), "The data folder unavailable."
 
 all_TICs = []
 all_selected_region_TICs = []
