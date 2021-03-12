@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(  name='timspy',
         packages=find_packages(),
-        version='0.9.6',
+        version='0.9.7',
         description='TimsPy: access for raw timsTOF Pro data for data scientists',
         long_description='TimsPy facilitates access to the raw data gathered by timsTOF Pro mass spectrometer. Directly see data in the long format in the familiar Pandas DataFrame object.',
         author='MatteoLacki',
@@ -31,6 +31,7 @@ setup(  name='timspy',
         scripts = [
             'bin/tims2hdf5.py',
             'bin/get_TIC.py',
-            'bin/get_stats.py'
+            'bin/get_stats.py',
+            'bin/get_mz_iim_heatmaps.py',
         ]
 )
