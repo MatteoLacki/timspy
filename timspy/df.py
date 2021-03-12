@@ -213,6 +213,7 @@ class TimsPyDF(OpenTIMS):
         Returns:
             np.array: A 'bins_row' times 'bins_column' array with rows corresponding to 'variables[0]' and columns to 'variables[1]'. If 'variables[2]' was provided it will be used as weights, so it should be non-negative, like 'intensity'. In that case the output contains Total Ion Count. If it is not provided and 'len(variables)==2', then the output correspond to peak counts.
         """
+        #TODO: move this
         frame = super().query(frame_No, columns=variables)
         x = frame[variables[0]]
         y = frame[variables[1]]
