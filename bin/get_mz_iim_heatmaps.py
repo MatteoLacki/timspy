@@ -3,6 +3,8 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 import pathlib
+import tqdm
+from fast_histogram import histogram2d
 
 from timspy.df import TimsPyDF
 
@@ -47,6 +49,8 @@ args = ap.parse_args()
 
 # args = MockArgs()
 # args.folders = list(pathlib.Path("/home/matteo/raw_data").glob("majestix/*.d"))
+# args.folders = [pathlib.Path("/mnt/ms/majestix_rawdata/RAW/M201203_001_Slot1-1_1_696.d"),
+#                 pathlib.Path("/mnt/ms/majestix_rawdata/RAW/M201203_002_Slot1-1_1_697.d")]
 # args.output_folder = pathlib.Path("test_outputs")
 # args.verbose = True
 # args.mz_bins_cnt = 200
@@ -81,12 +85,12 @@ def save2csv(X, name, folder):
     X = pd.DataFrame(X, index=mz_mids, columns=iim_mids)
     X.to_csv(args.output_folder/f"{name}__{folder.stem}__{analysis_time}.csv")
 
-# folder = args.folders[0]
+# folder = args.date[0]
 for folder in args.folders:
     if args.verbose:
         print(f"Dealing with: {folder}")
 
-    D = datesets[folder]    
+    D = datasets[folder]    
     frame_numbers = D.ms1_frames
     
     TIC_mean = np.zeros(shape=bins, dtype=float)
