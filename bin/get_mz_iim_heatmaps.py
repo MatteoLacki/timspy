@@ -85,7 +85,7 @@ def save2csv(X, name, folder):
     X = pd.DataFrame(X, index=mz_mids, columns=iim_mids)
     X.to_csv(args.output_folder/f"{name}__{folder.stem}__{analysis_time}.csv")
 
-# folder = args.date[0]
+# folder = args.folders[0]
 for folder in args.folders:
     if args.verbose:
         print(f"Dealing with: {folder}")
@@ -119,3 +119,13 @@ for folder in args.folders:
     save2csv(TIC_mean,"TIC_mean",folder)
     save2csv(TIC_p,"TIC_maxes",folder)
 
+# from timspy.plot import heatmap
+# import matplotlib.pyplot as plt
+
+# heatmap(TIC_mean)
+# heatmap(TIC_sum, show=False)
+# plt.title("TIC")
+# plt.show()
+# heatmap(TIC_p, show=False)
+# plt.title("Maximum Intensity")
+# plt.show()

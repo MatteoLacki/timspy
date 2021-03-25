@@ -297,7 +297,7 @@ class TimsPyDF(OpenTIMS):
                                            min_column,
                                            max_column,
                                            bins_column,
-                                           variables)
+                                           variables1)
             if desaggregate:
                 frames_stats[i] = frame_stats
             else:
