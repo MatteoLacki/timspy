@@ -4,6 +4,7 @@ from .df import TimsPyDF, conditions
 
 
 def folders2intensity_distribution(folders,
+                                   path_out,
                                    conditions=conditions,
                                    frame_numbers=None,
                                    verbose=True,
@@ -19,4 +20,6 @@ def folders2intensity_distribution(folders,
         intensity_distr["folder"] = folder
         intensity_counts_df.append( intensity_distr )
     intensity_counts_df = pd.concat( intensity_counts_df, ignore_index=True)
-    return intensity_counts_df
+    intensity_counts_df.to_csv(path_out, index=False)
+    if verbose:
+        print("done")
