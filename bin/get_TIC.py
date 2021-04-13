@@ -9,9 +9,7 @@ from timspy.df import TimsPyDF
 ap = argparse.ArgumentParser(description='Calculate the Total Ion Current for a given selection of points.',
   formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-default_condition = "inv_ion_mobility < .0009*mz + .4744 & \
-                     inv_ion_mobility > .6 & \
-                     inv_ion_mobility < 1.5"
+default_condition = "inv_ion_mobility < .0009*mz + .4744"
 # TODO: change this condition: there are limits for inv_ion_mobility in the sqlite DB.
 
 ARG = ap.add_argument
@@ -39,6 +37,12 @@ ARG('--inv_ion_mobility_bins_cnt',
     default=100,
     type=int,
     help='Number of bins to divide the inverse ion mobility axis into.')
+
+ARG('--min_intensity', 
+    default=100,
+    type=int,
+    help='Number of bins to divide the inverse ion mobility axis into.')
+
 
 ARG("--plot",
     help="Plot the selection results.",

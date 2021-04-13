@@ -1,3 +1,4 @@
+import collections
 import numpy as np
 import pandas as pd
 import pathlib
@@ -13,9 +14,11 @@ except ImportError as e:
 from opentimspy.opentims import OpenTIMS, all_columns, all_columns_dtype
 
 from .sql import tables_names, table2df
-
+from .intensity_counts import parse_conditions_for_column_names, sum_conditioned_counters, counter2df
 
 column2dtype = dict(zip(all_columns, all_columns_dtype))
+conditions = {"singly_charged":  "inv_ion_mobility >= .0009*mz + .4744",
+              "multiply_charged":"inv_ion_mobility <  .0009*mz + .4744"}
 
 
 class TimsPyDF(OpenTIMS):
@@ -119,6 +122,65 @@ class TimsPyDF(OpenTIMS):
             np.array: sums of intensities per frame. 
         """
         return self.frames.SummedIntensities.values if recalibrated else self.framesTIC()
+
+
+    def iter_intensity_counts(self, frame_numbers=None, verbose=False):
+        """Iterate histograms in sparse format offered by Python's Counter.
+
+        Args:
+            frame_numbers (iterable of ints): Valid frame numbers. Defaults to MS1 frames.
+            verbose (boolean): Show progress bar.
+        Yield:
+            collections.Counter: A counter with intensities as keys and counts of these intensities as values.
+        """
+        if frame_numbers is None:
+            frame_numbers = self.ms1_frames
+        for frame_No in tqdm.tqdm(frame_numbers) if verbose else frame_numbers:
+            yield collections.Counter(self.query(frame_No,["intensity"])["intensity"])
+
+
+    def iter_conditional_intensity_counts(self, conditions, frame_numbers=None, verbose=False):
+        """Iterate over conditional histograms, per frame basis.
+
+        Args:
+            conditions (dict): Named sets of inequalities in strings [like for pandas.DataFrame.querry].
+            frame_numbers (iterable of ints): Valid frame numbers. Defaults to MS1 frames.
+            verbose (boolean): Show progress bar.
+        Yield:
+            dict: A dictionary with keys corresponding to condition names and values being Counters.
+        """
+        column_names = parse_conditions_for_column_names(conditions)
+        column_names.append("intensity")
+        if verbose:
+            print(f"Getting columns: {column_names}")
+        if frame_numbers is None:
+            frame_numbers = self.ms1_frames
+        for frame_No in tqdm.tqdm(frame_numbers) if verbose else frame_numbers:
+            frame = self.query(frame_No, column_names)
+            yield {condition_name: collections.Counter(frame.query(condition).intensity) 
+                   for condition_name, condition in conditions.items()}
+
+
+    def intensity_distibution_df(self, conditions=conditions, frame_numbers=None, verbose=False):
+        """Get the overall intensity distribution for given frames for each condition.
+
+        Args:
+            conditions (dict): Named sets of inequalities in strings [like for pandas.DataFrame.querry].
+            frame_numbers (iterable of ints): Valid frame numbers. Defaults to MS1 frames.
+            verbose (boolean): Show progress bar.
+        Yield:
+            dict: A dictionary with keys corresponding to condition names and values being Counters.
+        """
+        intensity_count = sum_conditioned_counters(self.iter_conditional_intensity_counts(conditions,
+                                                                                          frame_numbers,
+                                                                                          verbose),
+                                                   conditions)
+        dfs_list = []
+        for condition_name in conditions:
+            df = counter2df(intensity_count[condition_name])
+            df["condition_name"] = condition_name
+            dfs_list.append(df)
+        return pd.concat(dfs_list, ignore_index=True)
 
 
     def plot_TIC(self, recalibrated=True, show=True):

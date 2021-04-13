@@ -33,5 +33,6 @@ setup(  name='timspy',
             'bin/get_TIC.py',
             'bin/get_stats.py',
             'bin/get_mz_iim_heatmaps.py',
+            'bin/get_intensity_counts.py'
         ]
 )
