@@ -1,4 +1,5 @@
 import pandas as pd
+from pathlib import Path
 
 from .df import TimsPyDF, conditions
 
@@ -12,6 +13,9 @@ def folders2intensity_distribution(folders,
                                    max_retention_time=None,
                                    _debug=False):
     intensity_counts_df = []
+    folders = [Path(folder) for folder in folders]
+    assert all(folder.exists() for folder in folders), f"Some folders do not exist:\n" + "\n".join(str(folder) for folder in folders if not folder.exists())
+    assert all((folder/"analysis.tdf").exists() and (folder/"analysis.tdf_bin").exists() for folder in folders), "Some folders miss either 'analysis.tdf' or 'analysis.tdf_bin'."  
     for folder in folders:
         dataset = TimsPyDF( folder )
         if _debug:
