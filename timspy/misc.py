@@ -8,12 +8,18 @@ def folders2intensity_distribution(folders,
                                    conditions=conditions,
                                    frame_numbers=None,
                                    verbose=True,
+                                   min_retention_time=None,
+                                   max_retention_time=None,
                                    _debug=False):
-    if _debug:
-        frame_numbers = list(range(1,10))
     intensity_counts_df = []
     for folder in folders:
         dataset = TimsPyDF( folder )
+        if _debug:
+            frame_numbers = list(range(1,10))
+        else:
+            if min_retention_time is not None and max_retention_time is not None:
+                frame_numbers = dataset.ms1_frames_within_retention_time_limits(min_retention_time,
+                                                                                max_retention_time)
         intensity_distr = dataset.intensity_distibution_df(conditions=conditions,
                                                            frame_numbers=frame_numbers,
                                                            verbose=verbose)

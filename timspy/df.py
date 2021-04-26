@@ -81,6 +81,9 @@ class TimsPyDF(OpenTIMS):
         print(f"minimal mass to charge ratio:\t{self.min_mz}")
         print(f"maximal mass to charge ratio:\t{self.max_mz}")
 
+    def ms1_frames_within_retention_time_limits(self, min_retention_time, max_retention_time):
+        return self.frames.query("MsMsType == 0 and Time >= @min_retention_time and Time <= @max_retention_time").Id.values
+
     def query(self, frames, columns=all_columns):
         """Get data from a selection of frames.
 
@@ -171,16 +174,19 @@ class TimsPyDF(OpenTIMS):
         Yield:
             dict: A dictionary with keys corresponding to condition names and values being Counters.
         """
-        intensity_count = sum_conditioned_counters(self.iter_conditional_intensity_counts(conditions,
-                                                                                          frame_numbers,
-                                                                                          verbose),
-                                                   conditions)
-        dfs_list = []
-        for condition_name in conditions:
-            df = counter2df(intensity_count[condition_name])
-            df["condition_name"] = condition_name
-            dfs_list.append(df)
-        return pd.concat(dfs_list, ignore_index=True)
+        intensity_count = sum_conditioned_counters(
+            self.iter_conditional_intensity_counts(conditions, frame_numbers, verbose),
+            conditions)
+        empty_result = all(len(cnt) == 0 for cnt in intensity_count.values())
+        if empty_result:
+            return pd.DataFrame()
+        else:
+            dfs_list = []
+            for condition_name in conditions:
+                df = counter2df(intensity_count[condition_name])
+                df["condition_name"] = condition_name
+                dfs_list.append(df)
+            return pd.concat(dfs_list, ignore_index=True)
 
 
     def plot_TIC(self, recalibrated=True, show=True):
