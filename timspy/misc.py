@@ -18,8 +18,14 @@ def folders2intensity_distribution(folders,
             frame_numbers = list(range(1,10))
         else:
             if min_retention_time is not None and max_retention_time is not None:
+                if verbose:
+                    print(f"Minimal retention time: {min_retention_time}")
+                    print(f"Maximal retention time: {max_retention_time}")
                 frame_numbers = dataset.ms1_frames_within_retention_time_limits(min_retention_time,
                                                                                 max_retention_time)
+                if verbose:
+                    print("Corresponding frames:")
+                    print(frame_numbers)
         intensity_distr = dataset.intensity_distibution_df(conditions=conditions,
                                                            frame_numbers=frame_numbers,
                                                            verbose=verbose)
