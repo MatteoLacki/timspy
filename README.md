@@ -338,7 +338,7 @@ from timspy.dia import TimsPyDIA
 
 
 path = 'path/to/your/data.d'
-D = TimsPyDF(path) # get data handle
+D = TimsPyDIA(path) # get data handle
 
 # Interested in Windows?
 D.windows
